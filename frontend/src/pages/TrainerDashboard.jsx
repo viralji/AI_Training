@@ -6,6 +6,7 @@ import { slides } from '../data/slides'
 import Sidebar from '../components/Sidebar'
 import SlideRenderer from '../components/SlideRenderer'
 import { api } from '../services/api'
+import { getBackendUrl, getSocketUrl } from '../utils/config'
 import './Dashboard.css'
 
 // Helper function to find chapter for a slide
@@ -40,7 +41,7 @@ const TrainerDashboard = () => {
   const loadSubmissions = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch('http://localhost:3001/api/submissions/assignment/' + activeSlide, {
+      const response = await fetch(`${getBackendUrl()}/api/submissions/assignment/${activeSlide}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -69,7 +70,7 @@ const TrainerDashboard = () => {
   const loadAssignmentStatus = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch('http://localhost:3001/api/assignments', {
+      const response = await fetch(`${getBackendUrl()}/api/assignments`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -100,7 +101,7 @@ const TrainerDashboard = () => {
     loadAssignmentStatus()
     
     // Setup Socket.io
-    const newSocket = io('http://localhost:3001')
+    const newSocket = io(getSocketUrl())
     newSocket.emit('join-training')
     setSocket(newSocket)
 
@@ -158,7 +159,7 @@ const TrainerDashboard = () => {
 
       const token = localStorage.getItem('token')
       
-      const url = `http://localhost:3001/api/assignments/${slideId}/start`
+      const url = `${getBackendUrl()}/api/assignments/${slideId}/start`
       
       const response = await fetch(url, {
         method: 'POST',
@@ -196,7 +197,7 @@ const TrainerDashboard = () => {
       }
 
       const token = localStorage.getItem('token')
-      const response = await fetch(`http://localhost:3001/api/assignments/${slideId}/reset`, {
+      const response = await fetch(`${getBackendUrl()}/api/assignments/${slideId}/reset`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

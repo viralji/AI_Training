@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth.jsx'
+import { getBackendUrl } from '../utils/config'
 import './Login.css'
 
 const Login = () => {
@@ -12,7 +13,7 @@ const Login = () => {
     setLoading(true)
     try {
       // Redirect to backend OAuth endpoint
-      window.location.href = 'http://localhost:3001/auth/google'
+      window.location.href = `${getBackendUrl()}/auth/google`
     } catch (error) {
       console.error('Login failed:', error)
       alert('Login failed. Please try again.')

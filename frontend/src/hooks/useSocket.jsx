@@ -1,8 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { io } from 'socket.io-client'
 import { useAuth } from './useAuth'
-
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3001'
+import { getSocketUrl } from '../utils/config'
 
 export const useSocket = (eventHandlers = {}) => {
   const socketRef = useRef(null)
@@ -12,7 +11,7 @@ export const useSocket = (eventHandlers = {}) => {
     if (!user) return
 
     // Create socket connection
-    socketRef.current = io(SOCKET_URL, {
+    socketRef.current = io(getSocketUrl(), {
       transports: ['websocket'],
       autoConnect: true
     })

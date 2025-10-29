@@ -5,6 +5,7 @@ import { io } from 'socket.io-client'
 import { slides } from '../data/slides'
 import Sidebar from '../components/Sidebar'
 import SlideRenderer from '../components/SlideRenderer'
+import { getBackendUrl, getSocketUrl } from '../utils/config'
 import './Dashboard.css'
 
 // Helper function to find chapter for a slide
@@ -40,7 +41,7 @@ const TraineeDashboard = () => {
     }
 
     // Setup Socket.io
-    const newSocket = io('http://localhost:3001')
+    const newSocket = io(getSocketUrl())
     newSocket.emit('join-training')
     setSocket(newSocket)
 
@@ -98,7 +99,7 @@ const TraineeDashboard = () => {
     try {
       const token = localStorage.getItem('token')
       
-      const response = await fetch('http://localhost:3001/api/submissions', {
+      const response = await fetch(`${getBackendUrl()}/api/submissions`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

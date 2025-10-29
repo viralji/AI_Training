@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { slideContent } from '../data/slideContent'
 import { io } from 'socket.io-client'
+import { getBackendUrl, getSocketUrl } from '../utils/config'
 import './SlideRenderer.css'
 
 const SlideRenderer = ({ slideId, isAssignment, userRole, isActive, onStartAssignment, onResetAssignment, onSubmission, submissions = [], isStarted = false, userEmail = '' }) => {
@@ -38,7 +39,7 @@ const SlideRenderer = ({ slideId, isAssignment, userRole, isActive, onStartAssig
   useEffect(() => {
     if (userRole === 'trainee' && onSubmission) {
       // This is a trainee dashboard, set up Socket.io listener
-      const socket = io('http://localhost:3001')
+      const socket = io(getSocketUrl())
       socket.emit('join-training')
       
       socket.on('assignment:reset', (data) => {
@@ -125,7 +126,7 @@ const SlideRenderer = ({ slideId, isAssignment, userRole, isActive, onStartAssig
         
         const token = localStorage.getItem('token')
         
-        const response = await fetch('http://localhost:3001/api/submissions', {
+        const response = await fetch(`${getBackendUrl()}/api/submissions`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -325,7 +326,7 @@ const SlideRenderer = ({ slideId, isAssignment, userRole, isActive, onStartAssig
                           {sub.image_path && (
                             <div style={{marginTop: '8px'}}>
                               <img 
-                                src={`http://localhost:3001/${sub.image_path}`} 
+                                src={`${getBackendUrl()}/${sub.image_path}`} 
                                 alt="Submitted image" 
                                 style={{
                                   maxWidth: '150px', 
