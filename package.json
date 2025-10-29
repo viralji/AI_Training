@@ -1,0 +1,21 @@
+{
+  "name": "live-ai-training-platform",
+  "version": "1.0.0",
+  "description": "Live AI Training Platform with Real-time Scoring",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"npm:dev:*\"",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "start": "cd backend && npm start",
+    "setup": "npm install && cd frontend && npm install && cd ../backend && npm install"
+  },
+  "keywords": ["ai", "training", "real-time", "socket.io"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
+

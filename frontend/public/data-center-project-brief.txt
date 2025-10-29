@@ -1,0 +1,86 @@
+Data Center Project Brief
+==========================
+
+Project: GreenTech Data Center Initiative
+Objective: Build a sustainable, energy-efficient data center facility
+
+PROJECT OVERVIEW
+================
+You are the Project Manager for GreenTech Solutions, tasked with planning a new 50,000 sq ft data center facility. This will be a flagship project showcasing sustainable technology and renewable energy integration.
+
+KEY REQUIREMENTS
+================
+- Location: Undecided (urban vs rural considerations)
+- Capacity: 2,000 server racks, 10MW power consumption
+- Timeline: 18-month construction + 6-month commissioning
+- Budget: $150M total project cost
+- Sustainability: LEED Platinum certification target
+- Technology: Latest cooling systems, renewable energy integration
+- Security: Tier III+ data center standards
+- Compliance: SOC 2, ISO 27001, HIPAA ready
+
+STAKEHOLDERS
+============
+- Executive Leadership (CEO, CTO, CFO)
+- Engineering Teams (Facilities, IT Infrastructure, Security)
+- Legal & Compliance Team
+- Finance & Procurement
+- External Vendors (Construction, Equipment, Utilities)
+- Government Agencies (Permits, Environmental)
+- Future Clients (Enterprise customers)
+
+CHALLENGES TO CONSIDER
+======================
+- Environmental impact assessment
+- Power grid capacity and backup systems
+- Cooling system efficiency in hot climates
+- Security and access control systems
+- Scalability for future expansion
+- Disaster recovery and business continuity
+- Regulatory compliance across multiple jurisdictions
+- Supply chain management for specialized equipment
+- Talent acquisition for specialized roles
+- Community relations and noise/visual impact
+
+SUCCESS METRICS
+===============
+- On-time delivery within budget
+- Energy efficiency (PUE < 1.3)
+- Zero safety incidents
+- 99.99% uptime SLA achievement
+- Customer satisfaction scores > 4.5/5
+- LEED Platinum certification
+- Positive community impact score
+
+BUDGET BREAKDOWN (ESTIMATED)
+============================
+- Land Acquisition: $15M
+- Construction: $80M
+- Equipment & Hardware: $35M
+- Permits & Legal: $5M
+- Contingency (10%): $15M
+- Total: $150M
+
+TIMELINE CONSIDERATIONS
+=======================
+- Site selection: 3 months
+- Design & Engineering: 6 months
+- Permits & Approvals: 4 months
+- Construction: 18 months
+- Commissioning: 6 months
+- Total: 37 months
+
+RISK FACTORS
+============
+- Weather delays during construction
+- Supply chain disruptions
+- Regulatory changes
+- Technology obsolescence
+- Labor shortages
+- Environmental concerns
+- Budget overruns
+- Security threats
+- Natural disasters
+- Market demand fluctuations
+
+
