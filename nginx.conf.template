@@ -1,10 +1,6 @@
-# IMPORTANT: This file should match PORT from .env file
-# Run: ./update-nginx.sh to automatically update this file from .env
-# Or manually replace all occurrences of BACKEND_PORT with your PORT value
-
 server {
     listen 80;
-    server_name aitraining.cloudextel.com;
+    server_name YOUR_DOMAIN_OR_IP;
 
     # Serve frontend static files
     location / {
@@ -58,3 +54,4 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
+

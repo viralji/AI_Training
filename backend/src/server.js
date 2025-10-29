@@ -82,6 +82,7 @@ app.use(passport.session());
 
 // Health check routes (before other routes)
 app.use('/health', healthRoutes);
+app.use('/api/health', healthRoutes); // Also available under /api prefix
 
 // Auth routes (without /api prefix for OAuth callbacks)
 app.use('/', authRoutes);

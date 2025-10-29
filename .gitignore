@@ -1,10 +1,56 @@
+# Dependencies
 node_modules/
+*/node_modules/
+
+# Build outputs
 dist/
 build/
+*.log
+
+# Database files
 *.sqlite
 *.sqlite-journal
-*.log
+*.db
+
+# Environment variables
 .env
-.DS_Store
+.env.local
+.env.*.local
+
+# IDE
 .vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Uploads and user content
+uploads/
+backend/uploads/
+logs/
+
+# PM2
+.pm2/
+ecosystem.config.local.js
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# Documentation (keep main README, ignore temp docs)
+OPTIMIZATION_SUMMARY.md
+PRODUCTION_READY_SUMMARY.md
+PORT_3002_FIX.md
+DEPLOYMENT.md
+
+# Keep these important docs:
+# README.md
+# DEPLOYMENT_GUIDE.md
+# NO_HARDCODED_PORTS.md
 

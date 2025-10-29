@@ -30,29 +30,86 @@ router.get('/:id', authenticateToken, async (req, res) => {
 
 // Start an assignment by slide_id (Trainer only)
 router.post('/:slideId/start', authenticateToken, requireTrainer, async (req, res) => {
+    const { slideId } = req.params;
+    const userId = req.user?.id || 'unknown';
+    
     try {
-        const { slideId } = req.params;
+        console.log(`[Assignment Start] Attempting to start assignment: ${slideId} by user: ${userId}`);
         
         // Check if assignment exists
         const assignment = assignmentDB.getBySlideId(slideId);
         if (!assignment) {
-            return res.status(404).json({ error: 'Assignment not found' });
+            const errorMsg = `Assignment not found: ${slideId}`;
+            console.error(`[Assignment Start Error] ${errorMsg}`);
+            return res.status(404).json({ 
+                error: errorMsg,
+                slideId: slideId,
+                timestamp: new Date().toISOString(),
+                code: 'ASSIGNMENT_NOT_FOUND'
+            });
         }
+        
+        console.log(`[Assignment Start] Found assignment: ${assignment.id}, current status: ${assignment.status}`);
         
         // Check if already active
         if (assignment.status === 'active') {
-            return res.status(400).json({ error: 'Assignment already started' });
+            const errorMsg = `Assignment ${slideId} is already active`;
+            console.warn(`[Assignment Start Warning] ${errorMsg}`);
+            return res.status(400).json({ 
+                error: errorMsg,
+                slideId: slideId,
+                assignmentId: assignment.id,
+                currentStatus: assignment.status,
+                timestamp: new Date().toISOString(),
+                code: 'ASSIGNMENT_ALREADY_ACTIVE'
+            });
         }
         
         // Update assignment status
-        assignmentDB.updateStatusBySlideId(slideId, 'active');
+        try {
+            assignmentDB.updateStatusBySlideId(slideId, 'active');
+            console.log(`[Assignment Start] Status updated to active for: ${slideId}`);
+        } catch (dbError) {
+            const errorMsg = `Database error updating assignment status: ${dbError.message}`;
+            console.error(`[Assignment Start Error] ${errorMsg}`, dbError);
+            return res.status(500).json({ 
+                error: errorMsg,
+                slideId: slideId,
+                databaseError: dbError.message,
+                timestamp: new Date().toISOString(),
+                code: 'DATABASE_UPDATE_ERROR'
+            });
+        }
         
         // Emit socket event
-        socketEvents.emitAssignmentStarted(slideId);
+        try {
+            socketEvents.emitAssignmentStarted(slideId);
+            console.log(`[Assignment Start] Socket event emitted for: ${slideId}`);
+        } catch (socketError) {
+            const errorMsg = `Socket error emitting assignment started: ${socketError.message}`;
+            console.error(`[Assignment Start Error] ${errorMsg}`, socketError);
+            // Don't fail the request if socket fails, but log it
+        }
         
-        res.json({ message: 'Assignment started', slideId });
+        console.log(`[Assignment Start] Successfully started assignment: ${slideId}`);
+        res.json({ 
+            message: 'Assignment started successfully', 
+            slideId: slideId,
+            assignmentId: assignment.id,
+            timestamp: new Date().toISOString()
+        });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        const errorMsg = `Unexpected error starting assignment ${slideId}: ${error.message}`;
+        console.error(`[Assignment Start Error] ${errorMsg}`, error);
+        console.error(`[Assignment Start Error] Stack trace:`, error.stack);
+        res.status(500).json({ 
+            error: errorMsg,
+            slideId: slideId,
+            errorType: error.constructor?.name || 'Unknown',
+            errorMessage: error.message,
+            timestamp: new Date().toISOString(),
+            code: 'INTERNAL_SERVER_ERROR'
+        });
     }
 });
 

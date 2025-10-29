@@ -150,6 +150,9 @@ const TrainerDashboard = () => {
   }
 
   const handleStartAssignment = async (slideId) => {
+    const backendUrl = getBackendUrl()
+    const url = `${backendUrl}/api/assignments/${slideId}/start`
+    
     try {
       // Check if already started
       if (startedAssignments.includes(slideId)) {
@@ -159,30 +162,153 @@ const TrainerDashboard = () => {
 
       const token = localStorage.getItem('token')
       
-      const url = `${getBackendUrl()}/api/assignments/${slideId}/start`
+      console.log(`[Assignment Start] Attempting to start assignment: ${slideId}`)
+      console.log(`[Assignment Start] URL: ${url}`)
+      console.log(`[Assignment Start] Backend URL: ${backendUrl}`)
       
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      })
+      let response
+      let errorData = null
       
+      // Setup timeout (30 seconds)
+      const timeoutController = new AbortController()
+      const timeoutId = setTimeout(() => timeoutController.abort(), 30000)
+      
+      try {
+        response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          signal: timeoutController.signal
+        })
+        clearTimeout(timeoutId)
+      } catch (fetchError) {
+        clearTimeout(timeoutId)
+        
+        // Check if it's a timeout
+        const isTimeout = fetchError.name === 'AbortError' || fetchError.message?.includes('timeout')
+        
+        // Network errors, timeout, etc.
+        const networkErrorMsg = `
+Failed to connect to backend server.
+
+Error Type: ${isTimeout ? 'Timeout Error' : (fetchError.name || 'Network Error')}
+Error Message: ${isTimeout ? 'Request timed out after 30 seconds' : (fetchError.message || 'Unknown network error')}
+
+Possible causes:
+- Backend server is not running
+- Network connectivity issue
+- CORS configuration problem
+- Firewall blocking the request
+- Backend URL is incorrect: ${backendUrl}
+
+Please check:
+1. Backend server is running on ${backendUrl}
+2. Network connectivity is working
+3. Check browser console for CORS errors
+
+Timestamp: ${new Date().toISOString()}
+Assignment: ${slideId}
+        `
+        console.error('[Assignment Start Error] Network/Fetch Error:', fetchError)
+        console.error('[Assignment Start Error] Details:', {
+          name: fetchError.name,
+          message: fetchError.message,
+          stack: fetchError.stack,
+          url: url,
+          backendUrl: backendUrl,
+          slideId: slideId
+        })
+        alert(networkErrorMsg)
+        return
+      }
+      
+      // Try to parse error response
       if (!response.ok) {
-        const errorText = await response.text()
-        throw new Error(`Failed to start assignment: ${response.status} - ${errorText}`)
+        try {
+          errorData = await response.json()
+        } catch (parseError) {
+          // If JSON parse fails, get text
+          const errorText = await response.text()
+          errorData = { error: errorText }
+        }
+        
+        const errorMsg = `
+Failed to start assignment: ${slideId}
+
+HTTP Status: ${response.status} ${response.statusText}
+Error Code: ${errorData.code || 'UNKNOWN'}
+Error Message: ${errorData.error || errorData.errorMessage || 'Unknown error'}
+
+Additional Details:
+${errorData.slideId ? `- Slide ID: ${errorData.slideId}` : ''}
+${errorData.assignmentId ? `- Assignment ID: ${errorData.assignmentId}` : ''}
+${errorData.currentStatus ? `- Current Status: ${errorData.currentStatus}` : ''}
+${errorData.databaseError ? `- Database Error: ${errorData.databaseError}` : ''}
+${errorData.errorType ? `- Error Type: ${errorData.errorType}` : ''}
+${errorData.timestamp ? `- Server Time: ${errorData.timestamp}` : ''}
+
+Request URL: ${url}
+Backend URL: ${backendUrl}
+Timestamp: ${new Date().toISOString()}
+
+Possible causes:
+${response.status === 404 ? '- Assignment not found in database' : ''}
+${response.status === 400 ? '- Assignment is already active' : ''}
+${response.status === 401 ? '- Authentication failed (token expired?)' : ''}
+${response.status === 403 ? '- Insufficient permissions (not a trainer?)' : ''}
+${response.status === 500 ? '- Server error - check backend logs' : ''}
+
+Please check backend logs for more details.
+        `
+        
+        console.error('[Assignment Start Error] HTTP Error Response:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData: errorData,
+          url: url,
+          slideId: slideId
+        })
+        
+        alert(errorMsg.trim())
+        return
       }
       
       const responseData = await response.json()
+      console.log('[Assignment Start] Success:', responseData)
       
       // Add to started assignments
       setStartedAssignments(prev => [...prev, slideId])
       
-      alert(`Assignment ${slideId} started for all trainees!`)
+      alert(`✅ Assignment ${slideId} started successfully for all trainees!`)
     } catch (error) {
-      console.error('Failed to start assignment:', error)
-      alert(`Failed to start assignment: ${error.message}`)
+      // Catch any unexpected errors
+      const unexpectedErrorMsg = `
+Unexpected error starting assignment: ${slideId}
+
+Error Type: ${error.constructor?.name || 'Unknown'}
+Error Message: ${error.message || 'Unknown error'}
+
+Stack Trace:
+${error.stack || 'No stack trace available'}
+
+Timestamp: ${new Date().toISOString()}
+URL: ${url || 'Not determined'}
+Backend URL: ${backendUrl || 'Not determined'}
+
+Please check browser console and backend logs for more details.
+      `
+      
+      console.error('[Assignment Start Error] Unexpected Error:', error)
+      console.error('[Assignment Start Error] Full Error Object:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+        slideId: slideId
+      })
+      
+      alert(unexpectedErrorMsg.trim())
     }
   }
 

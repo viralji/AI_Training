@@ -6,12 +6,12 @@ module.exports = {
     exec_mode: 'cluster',
     env: {
       NODE_ENV: 'development',
-      PORT: 3000,
+      PORT: process.env.PORT || 3000,
       HOST: '0.0.0.0'
     },
     env_production: {
       NODE_ENV: 'production',
-      PORT: 3000,
+      PORT: process.env.PORT, // Must be set in .env file - no fallback
       HOST: '0.0.0.0',
       JWT_SECRET: process.env.JWT_SECRET,
       SESSION_SECRET: process.env.SESSION_SECRET,

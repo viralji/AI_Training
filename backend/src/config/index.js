@@ -12,7 +12,8 @@ dotenv.config({ path: path.join(__dirname, '../../.env') })
 export const config = {
   // Server configuration
   server: {
-    port: process.env.PORT || 3001,
+    // PORT must be set in .env file - no hardcoded fallback for production
+    port: process.env.PORT ? parseInt(process.env.PORT) : undefined,
     host: process.env.HOST || '0.0.0.0',
     nodeEnv: process.env.NODE_ENV || 'development',
     isProduction: process.env.NODE_ENV === 'production',
@@ -98,6 +99,11 @@ export const config = {
 // Validation function
 export const validateConfig = () => {
   const errors = []
+
+  // PORT is required (must be set in .env file)
+  if (!config.server.port || isNaN(config.server.port)) {
+    errors.push('PORT environment variable is required and must be a valid number')
+  }
 
   // Required environment variables for production
   if (config.server.isProduction) {
