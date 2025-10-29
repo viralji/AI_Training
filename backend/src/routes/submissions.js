@@ -40,23 +40,80 @@ router.post('/', authenticateToken, async (req, res) => {
         const submissionId = submissionDB.create(submissionData);
         const submission = submissionDB.getByAssignmentAndUser(assignment.id, user_id);
 
-        // Auto-score with Gemini AI (async, non-blocking)
+        // Auto-score with Gemini AI (async, non-blocking) - LIVE SCORING
         if (geminiService.isAvailable()) {
-            geminiService.scoreAssignment(content, assignment.title)
+            console.log(`[Submission] Starting live auto-scoring for submission ${submissionId} (Assignment: ${assignment.title})`);
+            
+            // Extract requirements from description/instruction HTML
+            // Check both 'instruction' and 'description' fields for maximum compatibility
+            const instructionHtml = assignment.instruction || assignment.description || '';
+            let requirements = [];
+            
+            if (instructionHtml) {
+                // Try to extract requirements from HTML list items
+                const requirementMatch = instructionHtml.match(/<li>(.+?)<\/li>/g);
+                if (requirementMatch) {
+                    requirements = requirementMatch.map(li => li.replace(/<\/?li>/g, '').replace(/<[^>]*>/g, '').trim());
+                }
+                
+                // If no list items found, try to extract from "Your Task:" or "Requirements:" sections
+                if (requirements.length === 0) {
+                    const taskMatch = instructionHtml.match(/(?:Your Task|Requirements?|Task|Assignment):\s*(.+?)(?=<h|<div|$)/is);
+                    if (taskMatch) {
+                        const taskText = taskMatch[1].replace(/<[^>]*>/g, ' ').trim();
+                        if (taskText) {
+                            requirements.push(taskText);
+                        }
+                    }
+                }
+                
+                // Extract evaluation criteria if present
+                const criteriaMatch = instructionHtml.match(/(?:evaluate|evaluation|scoring|criteria).*?<li>(.+?)<\/li>/gis);
+                if (criteriaMatch) {
+                    criteriaMatch.forEach(match => {
+                        const criterion = match.replace(/<\/?li>/g, '').replace(/<[^>]*>/g, '').trim();
+                        if (criterion) {
+                            requirements.push(`Evaluation: ${criterion}`);
+                        }
+                    });
+                }
+            }
+
+            console.log(`[Submission] Scoring with ${requirements.length} extracted requirements`);
+
+            geminiService.scoreAssignment(
+                content, 
+                assignment.title || assignment.name || 'Assignment',
+                instructionHtml, // Pass full HTML description/instruction
+                requirements
+            )
                 .then(async (scoringResult) => {
+                    console.log(`[Submission] ✅ Scoring complete for submission ${submissionId}: ${scoringResult.score}/10`);
+                    
                     // Update submission with AI score
                     submissionDB.updateScore(submissionId, scoringResult.score, scoringResult.feedback);
                     
-                    // Get updated submission
+                    // Get updated submission with all details
                     const updatedSubmission = submissionDB.getByAssignmentAndUser(assignment.id, user_id);
                     
-                    // Emit socket event with score
-                    socketEvents.emitSubmissionScored(updatedSubmission);
+                    if (updatedSubmission) {
+                        // Add slideId for frontend compatibility
+                        updatedSubmission.slideId = assignment.slide_id;
+                        
+                        // Emit socket event with score (LIVE UPDATE)
+                        socketEvents.emitSubmissionScored(updatedSubmission);
+                        console.log(`[Submission] 📡 Emitted submission:scored event for trainer dashboard`);
+                    } else {
+                        console.warn(`[Submission] ⚠️ Could not find updated submission ${submissionId} to emit`);
+                    }
                 })
                 .catch((error) => {
-                    console.error('Auto-scoring failed:', error.message);
-                    // Don't fail the submission if scoring fails
+                    console.error(`[Submission] ❌ Auto-scoring failed for submission ${submissionId}:`, error.message);
+                    console.error(`[Submission] Error stack:`, error.stack);
+                    // Don't fail the submission if scoring fails - submission is still saved
                 });
+        } else {
+            console.warn('[Submission] ⚠️ Gemini AI not available - skipping auto-scoring');
         }
 
         // Emit socket event for trainer (immediate, without score)

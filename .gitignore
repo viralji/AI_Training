@@ -43,14 +43,5 @@ ecosystem.config.local.js
 *.temp
 *.bak
 
-# Documentation (keep main README, ignore temp docs)
-OPTIMIZATION_SUMMARY.md
-PRODUCTION_READY_SUMMARY.md
-PORT_3002_FIX.md
-DEPLOYMENT.md
-
-# Keep these important docs:
-# README.md
-# DEPLOYMENT_GUIDE.md
-# NO_HARDCODED_PORTS.md
+# Documentation (keep main README and DEPLOYMENT.md)
 

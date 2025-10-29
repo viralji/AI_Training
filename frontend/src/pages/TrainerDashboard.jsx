@@ -117,10 +117,20 @@ const TrainerDashboard = () => {
       })
     })
 
-    // Listen for AI scoring events
+    // Listen for AI scoring events (LIVE SCORING)
     newSocket.on('submission:scored', (data) => {
+      console.log('[TrainerDashboard] 📊 Received submission:scored event:', {
+        submissionId: data.id,
+        score: data.score,
+        user: data.name || data.email,
+        assignment: data.assignment_title || activeSlide
+      })
+      
       // Reload submissions from database to get the latest scores
+      // This ensures we get the most up-to-date submission with score
       loadSubmissions()
+      
+      console.log('[TrainerDashboard] ✅ Reloaded submissions after scoring update')
     })
 
     // Listen for assignment reset events

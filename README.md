@@ -13,9 +13,9 @@ Production-ready AI training platform with real-time assignments, AI-powered sco
 - 📱 **Responsive Design** - Mobile-friendly interface
 - 🎨 **Modern UI** - Professional dark theme
 
-## 🚀 Quick Start (Production)
+## 🚀 Production Deployment
 
-See **[DEPLOY.md](./DEPLOY.md)** for complete production deployment guide.
+See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for complete production deployment guide (Local → Git → Digital Ocean).
 
 ### Key Steps:
 

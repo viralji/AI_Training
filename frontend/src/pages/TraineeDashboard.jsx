@@ -40,6 +40,34 @@ const TraineeDashboard = () => {
       navigate('/login')
     }
 
+    // Function to load active assignments from database
+    const loadActiveAssignments = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        const backendUrl = getBackendUrl()
+        const response = await fetch(`${backendUrl}/api/assignments/status/active`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+        
+        if (response.ok) {
+          const activeAssignmentsFromDB = await response.json()
+          // Extract slideId from assignments
+          const slideIds = activeAssignmentsFromDB.map(a => a.slide_id)
+          console.log('[TraineeDashboard] Loaded active assignments from database:', slideIds)
+          setActiveAssignments(slideIds)
+        } else {
+          console.warn('[TraineeDashboard] Failed to load active assignments from database')
+        }
+      } catch (error) {
+        console.error('[TraineeDashboard] Error loading active assignments:', error)
+      }
+    }
+
+    // Load active assignments from database first
+    loadActiveAssignments()
+
     // Setup Socket.io
     const newSocket = io(getSocketUrl())
     newSocket.emit('join-training')
@@ -48,6 +76,7 @@ const TraineeDashboard = () => {
     // Listen for active assignments when joining (for users who log in late)
     newSocket.on('active-assignments', (data) => {
       if (data.assignments && data.assignments.length > 0) {
+        console.log('[TraineeDashboard] Received active assignments from socket:', data.assignments)
         setActiveAssignments(data.assignments)
       }
     })
