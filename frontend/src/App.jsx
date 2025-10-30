@@ -4,7 +4,6 @@ import Login from './pages/Login'
 import TrainerDashboard from './pages/TrainerDashboard'
 import TraineeDashboard from './pages/TraineeDashboard'
 import './index.css'
-import VersionBadge from './components/VersionBadge'
 
 function AppContent() {
   const { user, loading } = useAuth()
@@ -26,7 +25,6 @@ function AppContent() {
 
   return (
     <BrowserRouter>
-      <VersionBadge />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/trainer" element={<Navigate to="/trainer/chapter-1" replace />} />

@@ -39,10 +39,10 @@ router.get('/auth/google/callback',
             
             // Generate token
             const token = generateToken(user);
-            console.log('Generated token, redirecting to:', process.env.FRONTEND_URL || 'http://localhost:5175');
+            console.log('Generated token, redirecting to:', process.env.FRONTEND_URL || 'http://localhost:5173');
             
             // Redirect to frontend with token
-            const redirectUrl = `${process.env.FRONTEND_URL || 'http://localhost:5175'}/login?token=${token}&user=${encodeURIComponent(JSON.stringify({
+            const redirectUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?token=${token}&user=${encodeURIComponent(JSON.stringify({
                 id: user.id,
                 email: user.email,
                 name: user.name,
@@ -54,7 +54,7 @@ router.get('/auth/google/callback',
             res.redirect(redirectUrl);
         } catch (error) {
             console.error('Auth callback error:', error);
-            res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5175'}/login?error=auth_failed`);
+            res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=auth_failed`);
         }
     }
 );
