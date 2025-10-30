@@ -76,6 +76,13 @@ cd frontend
 npm install 2>&1 | grep -v "npm WARN" || true
 echo ""
 
+# Copy VERSION file to public directory
+if [ -f ../VERSION ]; then
+    echo "📋 Copying VERSION file to public directory..."
+    cp ../VERSION public/VERSION
+    echo -e "${GREEN}✅ VERSION file copied${NC}"
+fi
+
 # Build frontend
 echo "🏗️  Building frontend for production..."
 npm run build

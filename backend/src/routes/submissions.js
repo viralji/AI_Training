@@ -44,48 +44,14 @@ router.post('/', authenticateToken, async (req, res) => {
         if (geminiService.isAvailable()) {
             console.log(`[Submission] Starting live auto-scoring for submission ${submissionId} (Assignment: ${assignment.title})`);
             
-            // Extract requirements from description/instruction HTML
-            // Check both 'instruction' and 'description' fields for maximum compatibility
-            const instructionHtml = assignment.instruction || assignment.description || '';
-            let requirements = [];
-            
-            if (instructionHtml) {
-                // Try to extract requirements from HTML list items
-                const requirementMatch = instructionHtml.match(/<li>(.+?)<\/li>/g);
-                if (requirementMatch) {
-                    requirements = requirementMatch.map(li => li.replace(/<\/?li>/g, '').replace(/<[^>]*>/g, '').trim());
-                }
-                
-                // If no list items found, try to extract from "Your Task:" or "Requirements:" sections
-                if (requirements.length === 0) {
-                    const taskMatch = instructionHtml.match(/(?:Your Task|Requirements?|Task|Assignment):\s*(.+?)(?=<h|<div|$)/is);
-                    if (taskMatch) {
-                        const taskText = taskMatch[1].replace(/<[^>]*>/g, ' ').trim();
-                        if (taskText) {
-                            requirements.push(taskText);
-                        }
-                    }
-                }
-                
-                // Extract evaluation criteria if present
-                const criteriaMatch = instructionHtml.match(/(?:evaluate|evaluation|scoring|criteria).*?<li>(.+?)<\/li>/gis);
-                if (criteriaMatch) {
-                    criteriaMatch.forEach(match => {
-                        const criterion = match.replace(/<\/?li>/g, '').replace(/<[^>]*>/g, '').trim();
-                        if (criterion) {
-                            requirements.push(`Evaluation: ${criterion}`);
-                        }
-                    });
-                }
-            }
-
-            console.log(`[Submission] Scoring with ${requirements.length} extracted requirements`);
+            // Get complete assignment context
+            const assignmentTitle = assignment.title || assignment.name || 'Assignment';
+            const assignmentInstruction = assignment.instruction || assignment.description || '';
 
             geminiService.scoreAssignment(
                 content, 
-                assignment.title || assignment.name || 'Assignment',
-                instructionHtml, // Pass full HTML description/instruction
-                requirements
+                assignmentTitle,
+                assignmentInstruction
             )
                 .then(async (scoringResult) => {
                     console.log(`[Submission] ✅ Scoring complete for submission ${submissionId}: ${scoringResult.score}/10`);

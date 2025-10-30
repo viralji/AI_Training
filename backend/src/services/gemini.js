@@ -41,12 +41,12 @@ class GeminiService {
     }
   }
 
-  async scoreAssignment(submissionContent, assignmentTitle = '', assignmentInstruction = '', assignmentRequirements = []) {
+  async scoreAssignment(submissionContent, assignmentTitle = '', assignmentInstruction = '') {
     if (!this.model) {
       throw new Error('Gemini API not available');
     }
 
-    const scoringPrompt = this.buildScoringPrompt(submissionContent, assignmentTitle, assignmentInstruction, assignmentRequirements);
+    const scoringPrompt = this.buildScoringPrompt(submissionContent, assignmentTitle, assignmentInstruction);
     
     try {
       console.log(`[Gemini] Scoring submission for assignment: ${assignmentTitle}`);
@@ -70,44 +70,6 @@ class GeminiService {
       throw new Error('Gemini API not available');
     }
 
-    // Extract assignment requirements from description/instruction HTML
-    // Check both 'instruction' and 'description' fields
-    const instructionHtml = assignment.instruction || assignment.description || '';
-    let requirements = [];
-    
-    if (instructionHtml) {
-      // Remove HTML tags for cleaner text extraction
-      const textOnly = instructionHtml.replace(/<[^>]*>/g, ' ');
-      
-      // Try to extract requirements from HTML list items
-      const requirementMatch = instructionHtml.match(/<li>(.+?)<\/li>/g);
-      if (requirementMatch) {
-        requirements = requirementMatch.map(li => li.replace(/<\/?li>/g, '').replace(/<[^>]*>/g, '').trim());
-      }
-      
-      // If no list items found, try to extract from "Your Task:" or "Requirements:" sections
-      if (requirements.length === 0) {
-        const taskMatch = instructionHtml.match(/(?:Your Task|Requirements?|Task|Assignment):\s*(.+?)(?=<h|<div|$)/is);
-        if (taskMatch) {
-          const taskText = taskMatch[1].replace(/<[^>]*>/g, ' ').trim();
-          if (taskText) {
-            requirements.push(taskText);
-          }
-        }
-      }
-      
-      // Extract evaluation criteria if present
-      const criteriaMatch = instructionHtml.match(/(?:evaluate|evaluation|scoring|criteria).*?<li>(.+?)<\/li>/gis);
-      if (criteriaMatch) {
-        criteriaMatch.forEach(match => {
-          const criterion = match.replace(/<\/?li>/g, '').replace(/<[^>]*>/g, '').trim();
-          if (criterion) {
-            requirements.push(`Evaluation: ${criterion}`);
-          }
-        });
-      }
-    }
-
     const results = [];
     
     for (const submission of submissions) {
@@ -115,8 +77,7 @@ class GeminiService {
         const scoringResult = await this.scoreAssignment(
           submission.content,
           assignment.title || assignment.name,
-          assignment.instruction || assignment.description,
-          requirements
+          assignment.instruction || assignment.description
         );
         
         results.push({
@@ -142,11 +103,10 @@ class GeminiService {
     return results;
   }
 
-  buildScoringPrompt(submissionContent, assignmentTitle = '', assignmentInstruction = '', assignmentRequirements = []) {
-    // Clean HTML from instruction for better readability (but keep structure)
+  buildScoringPrompt(submissionContent, assignmentTitle = '', assignmentInstruction = '') {
+    // Clean HTML from instruction for better readability
     let cleanInstruction = assignmentInstruction || '';
     if (cleanInstruction) {
-      // Convert common HTML tags to readable format
       cleanInstruction = cleanInstruction
         .replace(/<h[1-6][^>]*>(.+?)<\/h[1-6]>/gi, '\n### $1\n')
         .replace(/<strong>(.+?)<\/strong>/gi, '**$1**')
@@ -163,61 +123,29 @@ class GeminiService {
         .trim();
     }
     
-    // Build strict scoring prompt with assignment context
-    let prompt = `
-You are a strict but fair AI trainer evaluating assignment submissions. Your job is to ensure submissions actually complete the assigned task.
+    // Simple, straightforward scoring prompt
+    const prompt = `You are evaluating a student's assignment submission.
 
-ASSIGNMENT DETAILS:
+ASSIGNMENT CONTEXT (Full Assignment Details):
 Title: ${assignmentTitle || 'General Assignment'}
 
-FULL ASSIGNMENT INSTRUCTIONS:
+Complete Assignment Instructions and Requirements:
 ${cleanInstruction || 'Complete the assignment as specified'}
-
-${assignmentRequirements.length > 0 ? `\nKEY REQUIREMENTS (extracted for clarity):\n${assignmentRequirements.map(req => `- ${req}`).join('\n')}` : ''}
 
 STUDENT SUBMISSION TO EVALUATE:
 ${submissionContent}
 
-CRITICAL EVALUATION RULES:
-1. If the submission is COMPLETELY IRRELEVANT to the assignment (e.g., wrong topic, error messages, random text, copied from elsewhere), give it 1-2/10 with a clear explanation that it doesn't address the assignment.
-2. If the submission is PARTIALLY relevant but misses key requirements, score 3-6/10.
-3. If the submission addresses the assignment but has issues, score 7-8/10.
-4. Only give 9-10/10 for exceptional work that fully meets all requirements.
+Please evaluate this submission against the assignment requirements above and provide a score from 1-10 based on:
+- Relevance: Does it address the assignment requirements?
+- Completeness: Does it cover all required aspects mentioned in the assignment?
+- Quality: Is it clear, well-structured, and professional?
+- Creativity: Does it show original thinking?
 
-SCORING CRITERIA (Total: 10 points):
-- RELEVANCE & ACCURACY (4 points): Does the submission actually address the assignment? Is it relevant to the task?
-  * 0-1 points: Completely irrelevant, wrong topic, or doesn't address assignment at all
-  * 2 points: Partially relevant but mostly off-topic
-  * 3 points: Relevant but has major inaccuracies
-  * 4 points: Fully relevant and accurate
-- COMPLETENESS (3 points): Does it address all required aspects?
-  * 0 points: Missing most requirements
-  * 1 point: Addresses some requirements
-  * 2 points: Addresses most requirements
-  * 3 points: Addresses all requirements fully
-- QUALITY & CLARITY (2 points): Is it well-structured, clear, and professional?
-  * 0 points: Poorly structured, unclear
-  * 1 point: Somewhat clear but needs improvement
-  * 2 points: Clear and well-structured
-- CREATIVITY & DEPTH (1 point): Shows original thinking and goes beyond basics
-  * 0 points: Basic, no original thought
-  * 1 point: Shows some original thinking or depth
-
-IMPORTANT: Be STRICT about relevance. A submission that doesn't address the assignment should NEVER score above 3/10.
-
-RESPONSE FORMAT (JSON only):
+Respond with ONLY a JSON object in this format:
 {
-  "score": [number between 1-10 - be strict if submission is irrelevant],
-  "feedback": "[constructive feedback explaining the score. If submission is irrelevant, clearly state why]",
-  "breakdown": {
-    "relevance": [score out of 4],
-    "completeness": [score out of 3], 
-    "quality": [score out of 2],
-    "creativity": [score out of 1]
-  }
-}
-
-Please provide ONLY the JSON response, no additional text.`;
+  "score": [number 1-10],
+  "feedback": "[brief explanation of the score]"
+}`;
 
     return prompt;
   }

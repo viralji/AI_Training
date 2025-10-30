@@ -6,6 +6,7 @@ import './Login.css'
 
 const Login = () => {
   const [loading, setLoading] = useState(false)
+  const [version, setVersion] = useState('')
   const navigate = useNavigate()
   const { login } = useAuth()
 
@@ -20,6 +21,14 @@ const Login = () => {
       setLoading(false)
     }
   }
+
+  // Load version on mount
+  useEffect(() => {
+    fetch('/VERSION')
+      .then(res => res.text())
+      .then(text => setVersion(text.trim()))
+      .catch(() => setVersion(''))
+  }, [])
 
   // Handle OAuth callback on mount
   useEffect(() => {
@@ -51,6 +60,9 @@ const Login = () => {
 
   return (
     <div className="login-container">
+      {version && (
+        <div className="version-badge">v{version}</div>
+      )}
       <div className="login-card">
         <div className="brand-section">
           <div className="logo">

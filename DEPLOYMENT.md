@@ -144,6 +144,19 @@ pm2 logs --lines 30
 
 ## 🔄 UPDATING AFTER CODE CHANGES
 
+### Update Version (Optional but Recommended)
+Before deploying, update the version number:
+
+```bash
+# Edit the VERSION file in project root
+nano VERSION
+# Change to: 1.0.1 (or your new version)
+```
+
+The version will be displayed on the login page (top-right corner) and helps track which code version is deployed.
+
+### Deploy Changes
+
 ```bash
 # On server
 cd /var/www/CE_AI_Training
