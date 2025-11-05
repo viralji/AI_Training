@@ -307,15 +307,15 @@ mkdir -p ~/AI_Training
 2. **Upload Files:**
    - Navigate to `/root/AI_Training/` on server
    - From local `AI_Training/docker/` folder, upload:
-     - `docker-compose.prod.yml` → rename to `docker-compose.yml`
-     - `.env.prod` → rename to `.env`
+     - `docker-compose.prod.yml` (keep same name)
+     - `.env.prod` (keep same name)
 
 **Alternative (SCP from terminal):**
 
 ```bash
 # From your local machine
-scp docker/docker-compose.prod.yml root@your-server-ip:~/AI_Training/docker-compose.yml
-scp docker/.env.prod root@your-server-ip:~/AI_Training/.env
+scp docker/docker-compose.prod.yml root@your-server-ip:~/AI_Training/
+scp docker/.env.prod root@your-server-ip:~/AI_Training/
 ```
 
 ---
@@ -329,16 +329,16 @@ ssh root@your-server-ip
 cd ~/AI_Training
 
 # Pull latest images from Docker Hub
-docker-compose pull
+docker-compose -f docker-compose.prod.yml --env-file .env.prod pull
 
 # Start services
-docker-compose up -d
+docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d
 
 # Wait for startup
 sleep 10
 
 # Check status
-docker-compose ps
+docker-compose -f docker-compose.prod.yml ps
 ```
 
 ---
@@ -441,23 +441,23 @@ exit
 
 ```bash
 # View logs
-docker-compose logs -f backend
-docker-compose logs -f frontend
+docker-compose -f docker-compose.prod.yml logs -f backend
+docker-compose -f docker-compose.prod.yml logs -f frontend
 
 # Restart services
-docker-compose restart
+docker-compose -f docker-compose.prod.yml restart
 
 # Update to latest images
-docker-compose pull
-docker-compose up -d
+docker-compose -f docker-compose.prod.yml pull
+docker-compose -f docker-compose.prod.yml up -d
 
 # Stop services
-docker-compose down
+docker-compose -f docker-compose.prod.yml down
 
 # Clean restart
-docker-compose down
-docker-compose pull
-docker-compose up -d --force-recreate
+docker-compose -f docker-compose.prod.yml down
+docker-compose -f docker-compose.prod.yml pull
+docker-compose -f docker-compose.prod.yml up -d --force-recreate
 ```
 
 ---
@@ -467,17 +467,17 @@ docker-compose up -d --force-recreate
 ```bash
 # On server
 cd ~/AI_Training
-docker-compose down
+docker-compose -f docker-compose.prod.yml down
 cd ~ && rm -rf AI_Training
 docker system prune -af --volumes
 mkdir -p ~/AI_Training
 
-# Upload .env and docker-compose.yml via WinSCP again
+# Upload .env.prod and docker-compose.prod.yml via WinSCP again
 
 # Deploy
 cd ~/AI_Training
-docker-compose pull
-docker-compose up -d
+docker-compose -f docker-compose.prod.yml --env-file .env.prod pull
+docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d
 docker logs ai_training_backend --tail 30
 ```
 

@@ -31,8 +31,8 @@ mkdir -p ~/AI_Training
 1. Connect to: `139.59.87.174` as `root`
 2. Navigate to `/root/AI_Training/`
 3. Upload from local `AI_Training/docker/`:
-   - `docker-compose.prod.yml` → rename to `docker-compose.yml`
-   - `.env.prod` → rename to `.env`
+   - `docker-compose.prod.yml` (keep same name)
+   - `.env.prod` (keep same name)
 
 ---
 
@@ -43,10 +43,10 @@ ssh root@139.59.87.174
 cd ~/AI_Training
 
 # Pull latest images
-docker-compose pull
+docker-compose -f docker-compose.prod.yml --env-file .env.prod pull
 
 # Start services
-docker-compose up -d
+docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d
 
 # Wait for startup
 sleep 10
@@ -69,7 +69,7 @@ docker exec ai_training_backend env | grep -E "FRONTEND_URL|CORS_ORIGIN|GOOGLE_R
 # GOOGLE_REDIRECT_URI=http://aitraining.clickk.cloud/auth/google/callback
 
 # Check container status
-docker-compose ps
+docker-compose -f docker-compose.prod.yml ps
 
 # Both should show "Up"
 ```
@@ -94,7 +94,7 @@ docker-compose ps
 ### If redirects to localhost:
 ```bash
 docker exec ai_training_backend env | grep FRONTEND_URL
-docker-compose up -d --force-recreate backend
+docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d --force-recreate backend
 docker logs ai_training_backend --tail 30
 ```
 
@@ -111,11 +111,11 @@ exit
 
 ```bash
 # View logs
-docker-compose logs -f backend
+docker-compose -f docker-compose.prod.yml logs -f backend
 
 # Restart
-docker-compose restart
+docker-compose -f docker-compose.prod.yml restart
 
 # Update
-docker-compose pull && docker-compose up -d
+docker-compose -f docker-compose.prod.yml pull && docker-compose -f docker-compose.prod.yml up -d
 ```
