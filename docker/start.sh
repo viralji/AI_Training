@@ -15,9 +15,11 @@ ENV=${1:-local}
 
 if [ "$ENV" = "prod" ]; then
     ENV_FILE=".env.prod"
+    COMPOSE_FILE="docker-compose.prod.yml"
     echo -e "${BLUE}🚀 Starting PRODUCTION environment...${NC}"
 else
     ENV_FILE=".env.local"
+    COMPOSE_FILE="docker-compose.local.yml"
     echo -e "${BLUE}🚀 Starting LOCAL development environment...${NC}"
 fi
 
@@ -41,19 +43,19 @@ fi
 # Pull images if production
 if [ "$ENV" = "prod" ]; then
     echo "📥 Pulling latest images from Docker Hub..."
-    ENV_FILE="$ENV_FILE" docker-compose pull || echo "⚠️  Some images failed to pull, will try to use local"
+    docker-compose -f "$COMPOSE_FILE" pull || echo "⚠️  Some images failed to pull, will try to use local"
     echo ""
 fi
 
 # Start containers
 echo "🚀 Starting containers..."
-ENV_FILE="$ENV_FILE" docker-compose up -d
+docker-compose -f "$COMPOSE_FILE" up -d
 
 echo ""
 echo -e "${GREEN}✅ Environment started!${NC}"
 echo ""
 echo "📋 Container status:"
-ENV_FILE="$ENV_FILE" docker-compose ps
+docker-compose -f "$COMPOSE_FILE" ps
 echo ""
 
 if [ "$ENV" = "local" ]; then
@@ -67,8 +69,8 @@ fi
 
 echo ""
 echo "📝 Useful commands:"
-echo "   View logs:  ENV_FILE=$ENV_FILE docker-compose logs -f"
-echo "   Stop:       ENV_FILE=$ENV_FILE docker-compose down"
-echo "   Restart:    ENV_FILE=$ENV_FILE docker-compose restart"
+echo "   View logs:  docker-compose -f $COMPOSE_FILE logs -f"
+echo "   Stop:       docker-compose -f $COMPOSE_FILE down"
+echo "   Restart:    docker-compose -f $COMPOSE_FILE restart"
 echo ""
 
