@@ -320,7 +320,27 @@ scp docker/.env.prod root@your-server-ip:~/AI_Training/
 
 ---
 
-### **Step 3: Deploy Application**
+### **Step 3: Get SSL Certificate** (One-time)
+
+```bash
+ssh root@your-server-ip
+cd ~/AI_Training
+
+# Stop containers if running
+docker-compose -f docker-compose.prod.yml down 2>/dev/null || true
+
+# Get SSL certificate
+apt-get install certbot -y
+certbot certonly --standalone -d your-domain.com
+
+# Certificate will be saved at:
+# /etc/letsencrypt/live/your-domain.com/fullchain.pem
+# /etc/letsencrypt/live/your-domain.com/privkey.pem
+
+# Auto-renewal is configured automatically
+```
+
+### **Step 4: Deploy Application**
 
 SSH into your server and run:
 
@@ -343,7 +363,17 @@ docker-compose -f docker-compose.prod.yml ps
 
 ---
 
-### **Step 4: Verify Deployment**
+### **Step 5: Update OAuth Redirect URI**
+
+Go to [Google Cloud Console](https://console.cloud.google.com/):
+1. Navigate to your OAuth credentials
+2. Update **Authorized redirect URIs** to:
+   - `https://your-domain.com/auth/google/callback`
+3. Save changes
+
+---
+
+### **Step 6: Verify Deployment**
 
 ```bash
 # Check container status
@@ -369,16 +399,18 @@ docker logs ai_training_frontend --tail 20
 
 ---
 
-### **Step 5: Test Application**
+### **Step 7: Test Application**
 
-1. **Open browser:** `http://your-domain.com` or `http://your-server-ip`
+1. **Open browser:** `https://your-domain.com` (should have green padlock 🔒)
 2. **Click "Continue with Google"**
-3. **Verify redirect:** Should redirect to `http://your-domain.com/trainer/...` (NOT localhost!)
+3. **Verify redirect:** Should redirect to `https://your-domain.com/trainer/...` (NOT localhost!)
 4. **Test features:**
-   - Dashboard loads
-   - Assignments visible
-   - Submit assignment
-   - AI scoring works
+   - ✅ HTTPS connection secure
+   - ✅ Dashboard loads
+   - ✅ Assignments visible
+   - ✅ Submit assignment
+   - ✅ AI scoring works
+   - ✅ No CORS errors in console
 
 ---
 
