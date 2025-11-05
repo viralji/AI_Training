@@ -243,7 +243,16 @@ See [Digital Ocean Deployment](#digital-ocean-deployment) section below.
 
 ## Digital Ocean Deployment
 
-### **Server Setup**
+### **Prerequisites**
+
+1. ✅ Docker images built and pushed to Docker Hub
+2. ✅ `docker/.env.prod` configured with your production URLs
+3. ✅ `docker/docker-compose.prod.yml` ready
+4. ✅ Digital Ocean droplet created with Docker installed
+
+---
+
+### **Step 1: Server Setup** (One-time)
 
 #### 1. **Create Droplet**
 
@@ -270,19 +279,38 @@ docker --version
 docker compose version
 ```
 
-#### 3. **Setup Project Directory**
+#### 3. **Clean Setup** (if redeploying)
 
 ```bash
-# Create project directory
+# Stop and remove old containers
+cd ~/AI_Training 2>/dev/null && docker-compose down 2>/dev/null || true
+
+# Clean everything
+cd ~ && rm -rf AI_Training
+docker system prune -af --volumes
+
+# Create fresh directory
 mkdir -p ~/AI_Training
-cd ~/AI_Training
 ```
 
-### **Deployment Steps**
+---
 
-#### 1. **Copy Files to Server**
+### **Step 2: Upload Files via WinSCP** (Recommended)
 
-Using SCP:
+**⚠️ CRITICAL: You must manually upload these 2 files:**
+
+1. **Connect to Server:**
+   - Host: `your-server-ip`
+   - Username: `root`
+   - Password: `your-password`
+
+2. **Upload Files:**
+   - Navigate to `/root/AI_Training/` on server
+   - From local `AI_Training/docker/` folder, upload:
+     - `docker-compose.prod.yml` → rename to `docker-compose.yml`
+     - `.env.prod` → rename to `.env`
+
+**Alternative (SCP from terminal):**
 
 ```bash
 # From your local machine
@@ -290,52 +318,168 @@ scp docker/docker-compose.prod.yml root@your-server-ip:~/AI_Training/docker-comp
 scp docker/.env.prod root@your-server-ip:~/AI_Training/.env
 ```
 
-Or using WinSCP (Windows):
-- Connect to your server
-- Navigate to `/root/AI_Training/`
-- Copy:
-  - `docker/docker-compose.prod.yml` → `docker-compose.yml`
-  - `docker/.env.prod` → `.env`
+---
 
-#### 2. **Deploy Application**
+### **Step 3: Deploy Application**
+
+SSH into your server and run:
 
 ```bash
-# SSH into server
 ssh root@your-server-ip
 cd ~/AI_Training
 
-# Pull latest images
+# Pull latest images from Docker Hub
 docker-compose pull
 
 # Start services
 docker-compose up -d
 
+# Wait for startup
+sleep 10
+
 # Check status
 docker-compose ps
-
-# View logs
-docker-compose logs -f backend
 ```
 
-#### 3. **Verify Deployment**
+---
+
+### **Step 4: Verify Deployment**
 
 ```bash
-# Check backend environment
-docker exec ai_training_backend env | grep FRONTEND_URL
-
-# Check logs for startup
-docker logs ai_training_backend --tail 50
+# Check container status
+docker-compose ps
 
 # Expected output:
-# 🌐 FRONTEND_URL: http://yourdomain.com
-# 🔗 CORS_ORIGIN: http://yourdomain.com
-# 🔐 GOOGLE_REDIRECT_URI: http://yourdomain.com/auth/google/callback
+# NAME                    STATUS
+# ai_training_backend     Up X seconds
+# ai_training_frontend    Up X seconds
+
+# Check backend logs
+docker logs ai_training_backend --tail 30
+
+# Expected output:
+# 🌐 FRONTEND_URL: http://aitraining.clickk.cloud
+# 🔗 CORS_ORIGIN: http://aitraining.clickk.cloud
+# 🔐 GOOGLE_REDIRECT_URI: http://aitraining.clickk.cloud/auth/google/callback
 # 🚀 Server running on 0.0.0.0:3002
+
+# Check frontend logs
+docker logs ai_training_frontend --tail 20
 ```
 
-#### 4. **Access Application**
+---
 
-Visit `http://your-server-ip` or `http://yourdomain.com`
+### **Step 5: Test Application**
+
+1. **Open browser:** `http://your-domain.com` or `http://your-server-ip`
+2. **Click "Continue with Google"**
+3. **Verify redirect:** Should redirect to `http://your-domain.com/trainer/...` (NOT localhost!)
+4. **Test features:**
+   - Dashboard loads
+   - Assignments visible
+   - Submit assignment
+   - AI scoring works
+
+---
+
+### **Common Issues After Deployment**
+
+#### ❌ **Issue: Redirects to localhost after login**
+
+**Cause:** Backend not reading correct `FRONTEND_URL`
+
+**Fix:**
+```bash
+# Check environment
+docker exec ai_training_backend env | grep FRONTEND_URL
+
+# If wrong, verify .env file
+cat ~/AI_Training/.env | grep FRONTEND_URL
+
+# Force recreate backend
+docker-compose up -d --force-recreate backend
+
+# Check logs again
+docker logs ai_training_backend --tail 30
+```
+
+#### ❌ **Issue: 404 on /api or /auth routes**
+
+**Cause:** Frontend Nginx not proxying correctly
+
+**Fix:**
+```bash
+# Check Nginx config
+docker exec ai_training_frontend cat /etc/nginx/conf.d/default.conf | grep "location /api"
+
+# Should show proxy_pass to backend
+# If not, rebuild frontend image with correct nginx.conf
+```
+
+#### ❌ **Issue: "Trainee not approved" or role issues**
+
+**Cause:** User role not set correctly in database
+
+**Fix:**
+```bash
+# Access backend container
+docker exec -it ai_training_backend sh
+
+# Check user in database
+sqlite3 /app/database.sqlite "SELECT id, email, role, approved FROM users;"
+
+# Update user role if needed
+sqlite3 /app/database.sqlite "UPDATE users SET role='trainer', approved=1 WHERE email='your-email@gmail.com';"
+
+# Exit container
+exit
+```
+
+---
+
+### **Maintenance Commands**
+
+```bash
+# View logs
+docker-compose logs -f backend
+docker-compose logs -f frontend
+
+# Restart services
+docker-compose restart
+
+# Update to latest images
+docker-compose pull
+docker-compose up -d
+
+# Stop services
+docker-compose down
+
+# Clean restart
+docker-compose down
+docker-compose pull
+docker-compose up -d --force-recreate
+```
+
+---
+
+### **Complete Fresh Deployment** (if something goes wrong)
+
+```bash
+# On server
+cd ~/AI_Training
+docker-compose down
+cd ~ && rm -rf AI_Training
+docker system prune -af --volumes
+mkdir -p ~/AI_Training
+
+# Upload .env and docker-compose.yml via WinSCP again
+
+# Deploy
+cd ~/AI_Training
+docker-compose pull
+docker-compose up -d
+docker logs ai_training_backend --tail 30
+```
 
 ---
 
