@@ -28,8 +28,14 @@ if [ ! -f "$ENV_FILE" ]; then
     exit 1
 fi
 
-# Load environment variables
-export $(cat $ENV_FILE | grep -v '^#' | grep -v '^$' | xargs)
+# Load environment variables safely
+while IFS='=' read -r key value; do
+    # Skip comments and empty lines
+    [[ "$key" =~ ^#.*$ ]] && continue
+    [[ -z "$key" ]] && continue
+    # Export the variable
+    export "$key=$value"
+done < <(grep -v '^#' "$ENV_FILE" | grep -v '^$')
 
 echo -e "${GREEN}🐳 Building Docker Images for ${ENV} environment...${NC}"
 echo ""
