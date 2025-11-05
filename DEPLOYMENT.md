@@ -753,5 +753,36 @@ docker-compose down && docker-compose up -d --force-recreate
 
 ---
 
-**Key Principle:** *Build once, configure anywhere* - Same Docker images work for local and production, only environment files differ.
+## 🤖 Cursor AI Prompt for Future Projects
+
+Want to set up Docker correctly from the start? Copy this prompt to Cursor:
+
+```
+Create a production-ready Docker setup for my full-stack application with:
+- Frontend: Multi-stage build (build → Nginx) with ARG for build-time URLs
+- Backend: Single-stage with ENV for runtime config
+- Single docker-compose.prod.yml (use -f flag, not separate files)
+- Nginx must proxy /api, /auth, /socket.io to backend service
+- Environment files: .env.prod with all variables
+- NO hardcoded URLs anywhere
+- Use Docker service names (backend, not localhost)
+
+CRITICAL REALITY CHECK:
+- Backend: Same image works everywhere (reads env at runtime) ✅
+- Frontend: MUST build separately for each environment (URLs compiled at build time) ❌
+- This is a Vite/React limitation, NOT a Docker issue
+- Accept it and build twice: once for local, once for production
+
+DEPLOYMENT APPROACH:
+1. Build images locally with correct URLs
+2. Push to Docker Hub
+3. Upload docker-compose.prod.yml and .env.prod to server via WinSCP
+4. Run: docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d
+
+NO auto-generated files on server. Full control over config.
+```
+
+---
+
+**Key Principle:** *Frontend must be built separately for each environment (URLs compiled at build time). Backend is environment-agnostic (reads config at runtime).*
 

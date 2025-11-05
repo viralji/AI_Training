@@ -43,10 +43,9 @@ cd docker && ./start.sh local
 
 ## 📖 Complete Documentation
 
-- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Complete deployment guide (Local + Production)
+- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Complete deployment guide (Local + Production + Digital Ocean)
+- **[THE_TRUTH_ABOUT_DOCKER_FRONTEND.md](./THE_TRUTH_ABOUT_DOCKER_FRONTEND.md)** - Why frontend needs separate builds
 - **[PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md)** - File organization & usage
-- **[DOCKER_CHEAT_SHEET.md](./DOCKER_CHEAT_SHEET.md)** - Quick reference commands
-- **[IDEAL_DOCKER_SETUP.md](./IDEAL_DOCKER_SETUP.md)** - Best practices & lessons learned
 
 ## 🛠️ Local Development
 
