@@ -43,10 +43,10 @@ cd docker && ./start.sh local
 
 ## 📖 Complete Documentation
 
-- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Complete deployment guide (Local + Production + SSL)
-- **[CURSOR_DOCKER_GUIDE.md](./CURSOR_DOCKER_GUIDE.md)** - 🔥 Copy this for your next project
-- **[THE_TRUTH_ABOUT_DOCKER_FRONTEND.md](./THE_TRUTH_ABOUT_DOCKER_FRONTEND.md)** - Why frontend needs separate builds
-- **[PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md)** - File organization & usage
+- **[DEPLOYMENT.md](./docs/DEPLOYMENT.md)** - Complete deployment guide (Local + Production + SSL)
+- **[CURSOR_DOCKER_GUIDE.md](./docs/CURSOR_DOCKER_GUIDE.md)** - 🔥 Copy this for your next project
+- **[THE_TRUTH_ABOUT_DOCKER_FRONTEND.md](./docs/THE_TRUTH_ABOUT_DOCKER_FRONTEND.md)** - Why frontend needs separate builds
+- **[PROJECT_STRUCTURE.md](./docs/PROJECT_STRUCTURE.md)** - File organization & usage
 
 ## 🛠️ Local Development
 
@@ -150,9 +150,7 @@ See `env.example` for complete list of all variables.
 
 ## 📚 Documentation
 
-- **[DEPLOY.md](./DEPLOY.md)** - Complete production deployment guide
-- **[NO_HARDCODED_PORTS.md](./NO_HARDCODED_PORTS.md)** - Port configuration details
-- **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Digital Ocean setup
+See **[docs/](./docs/)** folder for complete guides
 
 ## 🐛 Troubleshooting
 
@@ -193,4 +191,4 @@ Copyright © 2025
 
 ---
 
-For production deployment, see **[DEPLOY.md](./DEPLOY.md)**
+For production deployment, see **[docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md)**
