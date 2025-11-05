@@ -32,45 +32,41 @@ Complete guide for deploying the AI Training Platform locally or to production s
 
 ## Quick Start
 
-### **Option 1: Use Pre-built Images (Recommended)**
+### **⚠️ CRITICAL: You MUST Build Frontend Locally**
+
+**Pre-built images on Docker Hub have production URLs baked in.**
+**For local development, you MUST build the frontend with local URLs.**
 
 ```bash
 # 1. Clone repository
 git clone https://github.com/yourusername/AI_Training.git
 cd AI_Training
 
-# 2. Copy environment template
+# 2. Copy and edit environment
 cp docker/.env.local.example docker/.env.local
+nano docker/.env.local  # Add your Google OAuth credentials
 
-# 3. Edit environment variables
-nano docker/.env.local
+# 3. BUILD with local URLs (REQUIRED - don't skip!)
+./build.sh local
 
 # 4. Start services
-cd docker
-docker-compose --env-file .env.local up -d
+cd docker && ./start.sh local
 
 # 5. Access application
 open http://localhost:8080
 ```
 
-### **Option 2: Build From Source**
+### **Why Can't I Just Pull and Run?**
 
-```bash
-# 1. Clone and setup
-git clone https://github.com/yourusername/AI_Training.git
-cd AI_Training
+| Component | Can Use Pre-built? | Why |
+|-----------|-------------------|-----|
+| **Backend** | ✅ Yes | Reads env vars at runtime |
+| **Frontend** | ❌ No | URLs compiled into JavaScript at build time |
 
-# 2. Setup environment
-cp docker/.env.local.example docker/.env.local
-nano docker/.env.local  # Edit with your values
+**The frontend Docker image from Docker Hub was built with production URLs (`https://yourdomain.com`).**
+**You must rebuild it with local URLs (`http://localhost:3002`) for local development.**
 
-# 3. Build images
-./build.sh local
-
-# 4. Start services
-cd docker
-docker-compose --env-file .env.local up -d
-```
+This is a limitation of Vite/React build process - URLs are compiled, not configurable at runtime.
 
 ---
 

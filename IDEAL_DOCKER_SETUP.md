@@ -12,7 +12,19 @@
 ## ✅ Ideal Docker Setup (Copy this for future projects)
 
 ### **Core Principle:**
-**Docker images should be environment-agnostic. Only `.env` and `docker-compose.yml` should differ between environments.**
+**Backend images are environment-agnostic (config at runtime).
+Frontend images MUST be built separately for each environment (URLs compiled at build time).**
+
+### **⚠️ CRITICAL: Frontend vs Backend Images**
+
+| Component | Image Strategy | Why |
+|-----------|---------------|-----|
+| **Backend** | ✅ Same image everywhere | Reads env vars at runtime |
+| **Frontend** | ❌ Separate images needed | Vite compiles URLs into JS at build time |
+
+**This means:**
+- Backend: Build once, use everywhere ✅
+- Frontend: Build for local, build separately for production ❌
 
 ---
 
@@ -354,11 +366,12 @@ docker-compose logs -f backend
 1. **Use `ARG` in Dockerfile for build-time variables** (frontend URLs)
 2. **Use `ENV` in docker-compose for runtime variables** (backend config)
 3. **Use service names** for internal networking (`http://backend:3002`)
-4. **Keep images generic** - no hardcoded URLs or configs
-5. **One docker-compose.yml** - switch with `--env-file`
+4. **Backend images are generic** - config at runtime via ENV
+5. **Frontend images are environment-specific** - URLs baked in at build time
 6. **Nginx in frontend** - proxy API/auth to backend
 7. **Multi-stage builds** - smaller images
 8. **No volumes for code** - only for data (database, uploads)
+9. **Build frontend separately for local and production** - different URLs
 
 ### **❌ DON'T:**
 1. ❌ Hardcode URLs in source code
@@ -368,6 +381,43 @@ docker-compose logs -f backend
 5. ❌ Build images on production server
 6. ❌ Use `localhost` in Docker services (use service names)
 7. ❌ Cache frontend builds without build args
+8. ❌ **Think frontend and backend are the same** - they're NOT!
+
+---
+
+## ⚠️ **THE REALITY: Frontend vs Backend**
+
+### **Backend (Node.js/Express):**
+```bash
+# Build ONCE
+docker build -t myapp-backend:latest ./backend
+
+# Use EVERYWHERE - config via ENV at runtime
+docker run -e FRONTEND_URL=http://localhost:8080 myapp-backend:latest  # Local
+docker run -e FRONTEND_URL=https://mysite.com myapp-backend:latest     # Production
+```
+✅ **Same image, different config** - Works!
+
+### **Frontend (React/Vue/Vite):**
+```bash
+# Build for LOCAL
+docker build --build-arg VITE_API_URL=http://localhost:3002/api -t frontend:local
+
+# Build for PRODUCTION (separate!)
+docker build --build-arg VITE_API_URL=https://mysite.com/api -t frontend:prod
+```
+❌ **Same image won't work** - URLs are compiled into JavaScript!
+
+### **Why This Matters:**
+
+When you run `npm run build` with Vite/React:
+1. Vite reads `import.meta.env.VITE_API_URL`
+2. **Compiles it into the JavaScript** as a string literal
+3. The built `bundle.js` has `"http://localhost:3002"` hardcoded in it
+4. No way to change it at runtime!
+
+**Backend** reads `process.env.FRONTEND_URL` at **runtime** ✅
+**Frontend** has `"http://localhost:3002"` **compiled in** at **build time** ❌
 
 ---
 

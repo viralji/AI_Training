@@ -82,10 +82,11 @@ docker-compose --env-file .env.prod up -d     # Production
 
 ## 🔑 Key Principles Applied
 
-### ✅ **Build Once, Configure Anywhere**
-- Same Docker images for local and production
-- Only `.env` files differ between environments
-- No hardcoded URLs or configs
+### ⚠️ **Backend Once, Frontend Twice**
+- **Backend:** Same image for local and production ✅
+- **Frontend:** Must build separately (URLs compiled at build time) ❌
+- Only `.env` files differ, but frontend reads them at BUILD time
+- No hardcoded URLs in source, but compiled into built JavaScript
 
 ### ✅ **Minimal Files**
 - **Before:** 14 .sh scripts, 24 .md docs (confusing!)
