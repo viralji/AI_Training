@@ -3,6 +3,7 @@ import { useAuth, AuthProvider } from './hooks/useAuth.jsx'
 import Login from './pages/Login'
 import TrainerDashboard from './pages/TrainerDashboard'
 import TraineeDashboard from './pages/TraineeDashboard'
+import UserManagement from './pages/UserManagement'
 import './index.css'
 
 function AppContent() {
@@ -38,6 +39,12 @@ function AppContent() {
           path="/trainer/:chapterId/:slideId" 
           element={
             user ? (user.role === 'trainer' ? <TrainerDashboard /> : <Navigate to="/trainee" />) : <Navigate to="/login" />
+          } 
+        />
+        <Route 
+          path="/trainer/users" 
+          element={
+            user ? (user.role === 'trainer' ? <UserManagement /> : <Navigate to="/trainee" />) : <Navigate to="/login" />
           } 
         />
         <Route path="/trainee" element={<Navigate to="/trainee/chapter-1" replace />} />

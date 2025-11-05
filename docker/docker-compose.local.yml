@@ -1,0 +1,35 @@
+# Local Development Docker Compose
+# Usage: cd docker && docker-compose -f docker-compose.local.yml up -d
+
+services:
+  backend:
+    image: viraljidocker/ai-training-backend:latest
+    container_name: ai_training_backend_local
+    restart: unless-stopped
+    env_file:
+      - .env.local
+    ports:
+      - "3002:3002"
+    volumes:
+      - ../backend/database.sqlite:/app/database.sqlite
+      - ../backend/uploads:/app/uploads
+    networks:
+      - ai_net
+
+  frontend:
+    image: viraljidocker/ai-training-frontend:latest
+    container_name: ai_training_frontend_local
+    restart: unless-stopped
+    env_file:
+      - .env.local
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - ai_net
+
+networks:
+  ai_net:
+    driver: bridge
+

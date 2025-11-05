@@ -1,56 +1,19 @@
+// PM2 Ecosystem Configuration
+// All environment variables are loaded from .env file in the project root
+// DO NOT hardcode secrets here - use .env file instead
+//
+// PM2 automatically loads .env file from the working directory (cwd)
+// when you run: pm2 start ecosystem.config.js
+// Make sure .env file exists in /var/www/AI_Training/
+
 module.exports = {
   apps: [{
-    name: 'ai-training-platform',
-    script: 'backend/src/server.js',
-    instances: 'max',
-    exec_mode: 'cluster',
-    env: {
-      NODE_ENV: 'development',
-      PORT: process.env.PORT || 3000,
-      HOST: '0.0.0.0'
-    },
-    env_production: {
-      NODE_ENV: 'production',
-      PORT: process.env.PORT, // Must be set in .env file - no fallback
-      HOST: '0.0.0.0',
-      JWT_SECRET: process.env.JWT_SECRET,
-      SESSION_SECRET: process.env.SESSION_SECRET,
-      GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
-      GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
-      FRONTEND_URL: process.env.FRONTEND_URL,
-      GEMINI_API_KEY: process.env.GEMINI_API_KEY,
-      DATABASE_PATH: '/var/www/ai-training-platform/backend/database.sqlite',
-      UPLOAD_PATH: '/var/www/ai-training-platform/backend/uploads',
-      LOG_LEVEL: 'info',
-      LOG_FILE: 'true',
-      LOG_FILE_PATH: '/var/www/ai-training-platform/logs/app.log'
-    },
-    error_file: './logs/err.log',
-    out_file: './logs/out.log',
-    log_file: './logs/combined.log',
-    time: true,
-    max_memory_restart: '1G',
-    node_args: '--max-old-space-size=1024',
-    watch: false,
-    ignore_watch: ['node_modules', 'logs', 'uploads'],
-    restart_delay: 4000,
-    max_restarts: 10,
-    min_uptime: '10s',
-    kill_timeout: 5000,
-    wait_ready: true,
-    listen_timeout: 10000
-  }],
-
-  deploy: {
-    production: {
-      user: 'root',
-      host: process.env.DROPLET_IP,
-      ref: 'origin/main',
-      repo: 'git@github.com:your-username/ai-training-platform.git',
-      path: '/var/www/ai-training-platform',
-      'pre-deploy-local': '',
-      'post-deploy': 'npm install --production && pm2 reload ecosystem.config.js --env production',
-      'pre-setup': ''
-    }
-  }
+    name: "ai_training_api",
+    cwd: "/var/www/AI_Training",
+    script: "npm",
+    args: "start",
+    // All environment variables should be defined in .env file
+    // PM2 will automatically load .env from the cwd directory
+    // No hardcoded values here for security
+  }]
 }

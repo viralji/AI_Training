@@ -36,6 +36,8 @@ const TrainerDashboard = () => {
   const [socket, setSocket] = useState(null)
   const [startedAssignments, setStartedAssignments] = useState([])
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sendingEmails, setSendingEmails] = useState(false)
+  const [emailStatus, setEmailStatus] = useState(null)
 
   // Load existing submissions from database
   const loadSubmissions = async () => {
@@ -51,13 +53,14 @@ const TrainerDashboard = () => {
         const dbSubmissions = await response.json()
         // Convert database format to frontend format
         const formattedSubmissions = dbSubmissions.map(sub => ({
-          slideId: activeSlide, // Use the current active slide
+          slideId: activeSlide,
           content: sub.content,
           submittedAt: sub.submitted_at,
           traineeName: sub.name,
           score: sub.score,
           ai_feedback: sub.ai_feedback,
-          image_path: sub.image_path
+          image_path: sub.image_path,
+          approvedAt: sub.approved_at
         }))
         setSubmissions(formattedSubmissions)
       }
@@ -119,18 +122,8 @@ const TrainerDashboard = () => {
 
     // Listen for AI scoring events (LIVE SCORING)
     newSocket.on('submission:scored', (data) => {
-      console.log('[TrainerDashboard] 📊 Received submission:scored event:', {
-        submissionId: data.id,
-        score: data.score,
-        user: data.name || data.email,
-        assignment: data.assignment_title || activeSlide
-      })
-      
       // Reload submissions from database to get the latest scores
-      // This ensures we get the most up-to-date submission with score
       loadSubmissions()
-      
-      console.log('[TrainerDashboard] ✅ Reloaded submissions after scoring update')
     })
 
     // Listen for assignment reset events
@@ -159,6 +152,55 @@ const TrainerDashboard = () => {
     navigate('/login')
   }
 
+  const handleSendReportEmails = async () => {
+    if (sendingEmails) return;
+
+    const confirm = window.confirm(
+      'This will send training report emails to all trainees with their submissions and scores. Continue?'
+    );
+    
+    if (!confirm) return;
+
+    setSendingEmails(true);
+    setEmailStatus(null);
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${getBackendUrl()}/api/emails/send-reports`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setEmailStatus({
+          type: 'success',
+          message: data.message || `Successfully sent ${data.sent} email(s)`,
+          details: data
+        });
+      } else {
+        setEmailStatus({
+          type: 'error',
+          message: data.message || data.error || 'Failed to send emails',
+          details: data
+        });
+      }
+    } catch (error) {
+      console.error('Error sending report emails:', error);
+      setEmailStatus({
+        type: 'error',
+        message: 'Failed to send emails. Please check your email configuration.',
+        details: { error: error.message }
+      });
+    } finally {
+      setSendingEmails(false);
+    }
+  }
+
   const handleStartAssignment = async (slideId) => {
     const backendUrl = getBackendUrl()
     const url = `${backendUrl}/api/assignments/${slideId}/start`
@@ -172,9 +214,6 @@ const TrainerDashboard = () => {
 
       const token = localStorage.getItem('token')
       
-      console.log(`[Assignment Start] Attempting to start assignment: ${slideId}`)
-      console.log(`[Assignment Start] URL: ${url}`)
-      console.log(`[Assignment Start] Backend URL: ${backendUrl}`)
       
       let response
       let errorData = null
@@ -286,7 +325,6 @@ Please check backend logs for more details.
       }
       
       const responseData = await response.json()
-      console.log('[Assignment Start] Success:', responseData)
       
       // Add to started assignments
       setStartedAssignments(prev => [...prev, slideId])
@@ -401,8 +439,61 @@ Please check browser console and backend logs for more details.
       <main className="content">
         <div className="header">
           <h2>Welcome, {user?.name}</h2>
-          <button onClick={handleLogout}>Logout</button>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <button 
+              onClick={() => navigate('/trainer/users')}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#6366f1',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '600'
+              }}
+            >
+              👥 Users
+            </button>
+            <button 
+              onClick={handleSendReportEmails}
+              disabled={sendingEmails}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: sendingEmails ? '#666' : '#3bb6ff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: sendingEmails ? 'not-allowed' : 'pointer',
+                fontSize: '14px',
+                fontWeight: '600'
+              }}
+            >
+              {sendingEmails ? 'Sending...' : '📧 Send Report Emails'}
+            </button>
+            <button onClick={handleLogout}>Logout</button>
+          </div>
         </div>
+        
+        {emailStatus && (
+          <div style={{
+            margin: '15px 20px',
+            padding: '12px 16px',
+            backgroundColor: emailStatus.type === 'success' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+            border: `1px solid ${emailStatus.type === 'success' ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+            borderRadius: '8px',
+            color: emailStatus.type === 'success' ? '#22c55e' : '#ef4444',
+            fontSize: '14px'
+          }}>
+            <strong>{emailStatus.type === 'success' ? '✅' : '❌'} {emailStatus.message}</strong>
+            {emailStatus.details && (
+              <div style={{ marginTop: '8px', fontSize: '12px', opacity: 0.8 }}>
+                {emailStatus.details.sent !== undefined && `Sent: ${emailStatus.details.sent}`}
+                {emailStatus.details.failed !== undefined && emailStatus.details.failed > 0 && ` | Failed: ${emailStatus.details.failed}`}
+              </div>
+            )}
+          </div>
+        )}
         <SlideRenderer 
           slideId={activeSlide}
           isAssignment={isAssignmentSlide(activeSlide)}

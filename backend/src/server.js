@@ -7,19 +7,27 @@ import 'express-async-errors';
 import { createServer } from 'http';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { readFileSync } from 'fs';
+import dotenv from 'dotenv';
+
+// Get current directory (needed for dotenv config)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load environment variables FIRST, before any other imports that depend on them
+dotenv.config({ path: join(__dirname, '../../.env') });
+
 import { initSocket } from './services/socket.js';
 import passport from './config/passport.js';
 import authRoutes from './routes/auth.js';
 import assignmentRoutes from './routes/assignments.js';
 import submissionRoutes from './routes/submissions.js';
+import emailRoutes from './routes/emails.js';
+import userRoutes from './routes/users.js';
 import healthRoutes from './routes/health.js';
 import { assignmentDB } from './db/database.js';
 import { config, validateConfig } from './config/index.js';
 import { globalErrorHandler } from './utils/errors.js';
-
-// Get current directory
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 // Validate configuration
 validateConfig();
@@ -48,7 +56,13 @@ const limiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   // Skip rate limiting in development for localhost and common development IPs
+  // Also respect skip function from config (for health checks)
   skip: (req) => {
+    // Use config skip function if provided (for health checks)
+    if (config.rateLimit.skip && config.rateLimit.skip(req)) {
+      return true;
+    }
+    // Skip in development for localhost and private IPs
     if (config.server.isDevelopment) {
       const devIPs = ['127.0.0.1', '::1', '::ffff:127.0.0.1', 'localhost'];
       return devIPs.includes(req.ip) || req.ip.startsWith('192.168.') || req.ip.startsWith('10.');
@@ -84,6 +98,16 @@ app.use(passport.session());
 app.use('/health', healthRoutes);
 app.use('/api/health', healthRoutes); // Also available under /api prefix
 
+// Expose single-source version from root VERSION file
+app.get('/api/version', (req, res) => {
+  try {
+    const versionText = readFileSync(join(process.cwd(), 'VERSION'), 'utf8').trim();
+    res.json({ version: versionText });
+  } catch (error) {
+    res.status(500).json({ version: '', error: 'VERSION file not found' });
+  }
+});
+
 // Auth routes (without /api prefix for OAuth callbacks)
 app.use('/', authRoutes);
 
@@ -93,6 +117,8 @@ app.use('/uploads', express.static(config.uploads.uploadPath));
 // API routes (excluding auth routes to avoid duplication)
 app.use('/api/assignments', assignmentRoutes);
 app.use('/api/submissions', submissionRoutes);
+app.use('/api/emails', emailRoutes);
+app.use('/api/users', userRoutes);
 
 // API auth routes (for frontend API calls)
 app.get('/api/auth/user', (req, res) => {
@@ -132,6 +158,15 @@ if (assignments.length === 0) {
 // Start server
 const PORT = config.server.port;
 const HOST = config.server.host;
+
+// Log critical environment variables BEFORE server starts
+console.log(`🌐 FRONTEND_URL: ${process.env.FRONTEND_URL || '⚠️ NOT SET (using fallback: http://localhost:5173)'}`);
+console.log(`🔗 CORS_ORIGIN: ${process.env.CORS_ORIGIN || process.env.FRONTEND_URL || '⚠️ NOT SET'}`);
+console.log(`🔐 GOOGLE_REDIRECT_URI: ${process.env.GOOGLE_REDIRECT_URI || '⚠️ NOT SET'}`);
+
+if (config.server.isProduction && !process.env.FRONTEND_URL) {
+  console.error('❌ CRITICAL: FRONTEND_URL is not set in production! OAuth redirects will fail!');
+}
 
 server.listen(PORT, HOST, () => {
   console.log(`🚀 Server running on ${HOST}:${PORT}`);

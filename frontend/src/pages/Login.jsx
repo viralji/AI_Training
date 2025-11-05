@@ -22,11 +22,12 @@ const Login = () => {
     }
   }
 
-  // Load version on mount
+  // Load version on mount from backend single source
   useEffect(() => {
-    fetch('/VERSION')
-      .then(res => res.text())
-      .then(text => setVersion(text.trim()))
+    const api = getBackendUrl()
+    fetch(`${api}/api/version`)
+      .then(res => res.ok ? res.json() : { version: '' })
+      .then(data => setVersion((data.version || '').trim()))
       .catch(() => setVersion(''))
   }, [])
 
@@ -44,16 +45,31 @@ const Login = () => {
         localStorage.setItem('token', token)
         localStorage.setItem('user', JSON.stringify(user))
         
-        // Update auth context
+        // Update auth context first
         login(token, user)
         
-        // Navigate to dashboard
-        navigate(user.role === 'trainer' ? '/trainer' : '/trainee')
+        // Navigate to dashboard immediately
+        const redirectPath = user.role === 'trainer' ? '/trainer/chapter-1' : '/trainee/chapter-1'
+        navigate(redirectPath, { replace: true })
         
         // Clean up URL
-        window.history.replaceState({}, '', '/')
+        window.history.replaceState({}, '', redirectPath)
       } catch (error) {
         console.error('Failed to parse OAuth callback:', error)
+        setLoading(false)
+      }
+    } else {
+      // Check if user is already logged in
+      const existingToken = localStorage.getItem('token')
+      const existingUser = localStorage.getItem('user')
+      if (existingToken && existingUser) {
+        try {
+          const user = JSON.parse(existingUser)
+          const redirectPath = user.role === 'trainer' ? '/trainer/chapter-1' : '/trainee/chapter-1'
+          navigate(redirectPath, { replace: true })
+        } catch (error) {
+          console.error('Failed to parse existing user:', error)
+        }
       }
     }
   }, [navigate, login])
@@ -65,11 +81,8 @@ const Login = () => {
       )}
       <div className="login-card">
         <div className="brand-section">
-          <div className="logo">
-            <img src="/cloud-extel-logo.png" alt="CloudExtel" />
-          </div>
-          <h1>CloudExtel</h1>
-          <p className="subtitle">AI Literacy Training</p>
+          <h1>AI Literacy Training</h1>
+          <p className="subtitle">Empowering teams with AI skills</p>
         </div>
         
         <div className="login-content">

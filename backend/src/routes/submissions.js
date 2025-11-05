@@ -2,7 +2,7 @@ import express from 'express';
 import { submissionDB, assignmentDB } from '../db/database.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { socketEvents } from '../services/socket.js';
-import geminiService from '../services/gemini.js';
+import scoringQueue from '../services/scoringQueue.js';
 
 const router = express.Router();
 
@@ -22,12 +22,6 @@ router.post('/', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'Assignment is not active' });
         }
 
-        // Check if already submitted
-        const existing = submissionDB.getByAssignmentAndUser(assignment.id, user_id);
-        if (existing) {
-            return res.status(400).json({ error: 'Already submitted' });
-        }
-
         // Prepare submission data
         const submissionData = {
             assignment_id: assignment.id, // Use database ID, not slide ID
@@ -36,50 +30,56 @@ router.post('/', authenticateToken, async (req, res) => {
             submission_time
         };
 
-        // Create submission
+        // Create submission (handles race conditions with INSERT OR IGNORE)
+        // Returns null if duplicate submission detected
         const submissionId = submissionDB.create(submissionData);
-        const submission = submissionDB.getByAssignmentAndUser(assignment.id, user_id);
-
-        // Auto-score with Gemini AI (async, non-blocking) - LIVE SCORING
-        if (geminiService.isAvailable()) {
-            console.log(`[Submission] Starting live auto-scoring for submission ${submissionId} (Assignment: ${assignment.title})`);
-            
-            // Get complete assignment context
-            const assignmentTitle = assignment.title || assignment.name || 'Assignment';
-            const assignmentInstruction = assignment.instruction || assignment.description || '';
-
-            geminiService.scoreAssignment(
-                content, 
-                assignmentTitle,
-                assignmentInstruction
-            )
-                .then(async (scoringResult) => {
-                    console.log(`[Submission] ✅ Scoring complete for submission ${submissionId}: ${scoringResult.score}/10`);
-                    
-                    // Update submission with AI score
-                    submissionDB.updateScore(submissionId, scoringResult.score, scoringResult.feedback);
-                    
-                    // Get updated submission with all details
-                    const updatedSubmission = submissionDB.getByAssignmentAndUser(assignment.id, user_id);
-                    
-                    if (updatedSubmission) {
-                        // Add slideId for frontend compatibility
-                        updatedSubmission.slideId = assignment.slide_id;
-                        
-                        // Emit socket event with score (LIVE UPDATE)
-                        socketEvents.emitSubmissionScored(updatedSubmission);
-                        console.log(`[Submission] 📡 Emitted submission:scored event for trainer dashboard`);
-                    } else {
-                        console.warn(`[Submission] ⚠️ Could not find updated submission ${submissionId} to emit`);
-                    }
-                })
-                .catch((error) => {
-                    console.error(`[Submission] ❌ Auto-scoring failed for submission ${submissionId}:`, error.message);
-                    console.error(`[Submission] Error stack:`, error.stack);
-                    // Don't fail the submission if scoring fails - submission is still saved
+        
+        // Handle race condition: if submissionId is null, it means duplicate was detected
+        if (submissionId === null) {
+            // Check if submission exists (might have been created by another request)
+            const existing = submissionDB.getByAssignmentAndUser(assignment.id, user_id);
+            if (existing) {
+                return res.status(400).json({ 
+                    error: 'Already submitted',
+                    submissionId: existing.id,
+                    submission: existing
                 });
-        } else {
-            console.warn('[Submission] ⚠️ Gemini AI not available - skipping auto-scoring');
+            } else {
+                // Race condition edge case - should not happen, but handle gracefully
+                return res.status(409).json({ 
+                    error: 'Submission conflict - please try again',
+                    code: 'SUBMISSION_CONFLICT'
+                });
+            }
+        }
+
+        // Get the created submission
+        const submission = submissionDB.getByAssignmentAndUser(assignment.id, user_id);
+        if (!submission) {
+            console.error(`[Submission] Created submission ${submissionId} but could not retrieve it`);
+            return res.status(500).json({ error: 'Failed to retrieve submission after creation' });
+        }
+
+        // Add submission to scoring queue (non-blocking, with retry mechanism)
+        // The queue handles rate limiting and retries automatically
+        console.log(`[Submission] Adding submission ${submissionId} to scoring queue (assignment: ${assignment.id}, slide: ${assignment.slide_id})`);
+        try {
+            const queueResult = scoringQueue.addToQueue(
+                submissionId,
+                content,
+                assignment.id,
+                assignment.slide_id,
+                user_id,
+                0 // Initial attempt (not a retry)
+            );
+            if (queueResult && typeof queueResult.catch === 'function') {
+                queueResult.catch((error) => {
+                    console.error(`[Submission] Failed to process submission ${submissionId} in queue:`, error);
+                });
+            }
+            console.log(`[Submission] Submission ${submissionId} added to queue successfully`);
+        } catch (error) {
+            console.error(`[Submission] Failed to add submission ${submissionId} to queue:`, error);
         }
 
         // Emit socket event for trainer (immediate, without score)
@@ -213,6 +213,21 @@ router.get('/leaderboard/:assignmentId', authenticateToken, async (req, res) => 
             });
 
         res.json(leaderboard);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get scoring queue statistics (for monitoring - Trainer only)
+router.get('/queue/stats', authenticateToken, async (req, res) => {
+    try {
+        // Check if user is trainer
+        if (req.user.role !== 'trainer') {
+            return res.status(403).json({ error: 'Trainer access required' });
+        }
+
+        const stats = scoringQueue.getStats();
+        res.json(stats);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

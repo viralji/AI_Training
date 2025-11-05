@@ -17,6 +17,10 @@ build/
 .env.local
 .env.*.local
 
+# Docker environment files (keep examples, ignore actual)
+docker/.env.local
+docker/.env.prod
+
 # IDE
 .vscode/
 .idea/

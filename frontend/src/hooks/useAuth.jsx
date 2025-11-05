@@ -32,7 +32,7 @@ export const useAuth = () => {
           }
         }
       },
-      API_URL: import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+      API_URL: import.meta.env.VITE_API_URL || 'http://localhost:3002/api'
     }
   }
   return context
@@ -80,7 +80,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, getAuthHeaders, API_URL: import.meta.env.VITE_API_URL || 'http://localhost:3001/api' }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, getAuthHeaders, API_URL: import.meta.env.VITE_API_URL || 'http://localhost:3002/api' }}>
       {children}
     </AuthContext.Provider>
   )

@@ -4,9 +4,8 @@ const Sidebar = ({ slides, activeSlide, onSlideChange, searchTerm, onSearchChang
   return (
     <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="brand">
-        <img src="/cloud-extel-logo.png" alt="CloudExtel" className="logo" style={{width: '48px', height: '48px', objectFit: 'contain', borderRadius: '50%'}} />
         <div>
-          <div className="brand-title">CloudExtel</div>
+          <div className="brand-title">AI Training</div>
           <div className="mini">AI Literacy Training</div>
         </div>
       </div>

@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  backend:
+    image: viraljidocker/ai-training-backend:latest
+    container_name: ai_training_backend
+    restart: unless-stopped
+    environment:
+      # Critical: OAuth redirect URL - must match your domain
+      - FRONTEND_URL=${FRONTEND_URL:-http://aitraining.clickk.cloud}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://aitraining.clickk.cloud}
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI:-http://aitraining.clickk.cloud/auth/google/callback}
+      - NODE_ENV=production
+    env_file:
+      - .env.prod
+    ports:
+      - "3002:3002"
+    networks:
+      - ai_net
+
+  frontend:
+    image: viraljidocker/ai-training-frontend:latest
+    container_name: ai_training_frontend
+    restart: unless-stopped
+    env_file:
+      - .env.prod
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - ai_net
+
+networks:
+  ai_net:
+    driver: bridge

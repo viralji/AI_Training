@@ -1,4 +1,4 @@
-# CloudExtel AI Literacy Training Platform
+# AI Literacy Training Platform
 
 Production-ready AI training platform with real-time assignments, AI-powered scoring, and role-based access control.
 
@@ -28,15 +28,15 @@ See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for complete production deployment guid
 2. **Set environment variables**
    ```bash
    cp env.example .env
-   # Edit .env with your values (PORT, FRONTEND_URL, API keys, etc.)
+   # Edit .env with your values (PORT, FRONTEND_URL, VITE_API_URL, API keys, etc.)
+   # All variables (backend + frontend) are in ONE .env file at the root
    ```
 
 3. **Build frontend**
    ```bash
    cd frontend
-   cp env.example .env
-   # Edit frontend/.env
    npm install && npm run build
+   # Vite automatically reads VITE_* variables from root .env file
    ```
 
 4. **Deploy**
@@ -59,17 +59,13 @@ See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for complete production deployment guid
    cd frontend && npm install && cd ..
    ```
 
-2. **Backend Environment:**
+2. **Environment Variables:**
    ```bash
    cp env.example .env
-   # Set PORT (default: 3001), Google OAuth, Gemini API key, etc.
-   ```
-
-3. **Frontend Environment:**
-   ```bash
-   cd frontend
-   cp env.example .env
-   # Set VITE_API_URL, VITE_BACKEND_URL
+   # Set all variables in ONE .env file at root:
+   # - Backend: PORT, Google OAuth, Gemini API key, etc.
+   # - Frontend: VITE_API_URL, VITE_BACKEND_URL, VITE_SOCKET_URL
+   # Vite automatically reads VITE_* variables from root .env
    ```
 
 4. **Start Development Servers:**
@@ -99,8 +95,8 @@ AI_Training/
 │   │   ├── data/        # Slide content
 │   │   └── utils/       # Config helpers
 │   └── package.json
-├── .env                 # Backend environment (gitignored)
-├── env.example          # Environment template
+├── .env                 # All environment variables (backend + frontend) - gitignored
+├── env.example          # Environment template (single source of truth)
 ├── ecosystem.config.js  # PM2 configuration
 ├── nginx.conf          # Nginx reverse proxy
 └── update-nginx.sh     # Script to sync nginx with PORT
@@ -108,25 +104,27 @@ AI_Training/
 
 ## 🔧 Configuration
 
-### Environment Variables (Backend - `.env`)
+### Environment Variables (Single `.env` file at root)
 
-**Required:**
-- `PORT` - Server port (no default, must be set)
+**All environment variables are in ONE `.env` file at the project root.**
+
+**Backend Variables:**
+- `PORT` - Server port (required, no default)
 - `FRONTEND_URL` - Your frontend domain
 - `GOOGLE_CLIENT_ID` - Google OAuth client ID
 - `GOOGLE_CLIENT_SECRET` - Google OAuth secret
 - `JWT_SECRET` - JWT signing key (min 32 chars)
 - `GEMINI_API_KEY` - Gemini API key for AI scoring
+- `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS` - Email configuration
 
-See `env.example` for complete list.
-
-### Environment Variables (Frontend - `frontend/.env`)
-
-**Required:**
+**Frontend Variables (VITE_ prefix):**
 - `VITE_API_URL` - Backend API URL (e.g., `https://aitraining.cloudextel.com/api`)
 - `VITE_BACKEND_URL` - Backend base URL (e.g., `https://aitraining.cloudextel.com`)
+- `VITE_SOCKET_URL` - Socket.io URL (optional, defaults to backend URL)
 
-See `frontend/env.example` for details.
+**Note:** Vite automatically reads `VITE_*` variables from the root `.env` file during build.
+
+See `env.example` for complete list of all variables.
 
 ## 📝 Important Notes
 
@@ -178,13 +176,16 @@ sudo nginx -t && sudo systemctl reload nginx
 
 ```bash
 git pull
+# Switch to PROD mode (if not already)
+./switch-env.sh prod
 cd frontend && npm run build && cd ..
-pm2 restart ecosystem.config.js --env production
+# PM2 automatically loads .env from project root
+pm2 restart ecosystem.config.js
 ```
 
 ## 📄 License
 
-Copyright © CloudExtel 2025
+Copyright © 2025
 
 ---
 

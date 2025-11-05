@@ -37,52 +37,80 @@ sudo apt install nginx git -y
 ### 2.2 Clone Repository
 ```bash
 cd /var/www
-sudo git clone https://github.com/viralji/AI_Training.git CE_AI_Training
-sudo chown -R deploy:deploy CE_AI_Training
-cd CE_AI_Training
+sudo git clone https://github.com/viralji/AI_Training.git AI_Training
+sudo chown -R deploy:deploy AI_Training
+cd AI_Training
 ```
 
 ### 2.3 Setup Environment Variables
 
-**Backend `.env`:**
+**Single `.env` file (root directory):**
+All environment variables are now in ONE place - the root `.env` file.
+This includes both backend and frontend variables.
+
+The `.env` file has both DEV and PROD sections. For production deployment,
+the deployment script automatically switches to PROD mode.
+
 ```bash
 cp env.example .env
 nano .env
 ```
 
-**Required values:**
+**Important:** After editing `.env` with your production values, the deployment script
+will automatically switch to PRODUCTION mode. You can also manually switch using:
+```bash
+./switch-env.sh prod
+```
+
+**Required values (in root .env file):**
 ```env
+# Server Configuration
 NODE_ENV=production
 PORT=3002
+HOST=0.0.0.0
+
+# Frontend URLs
 FRONTEND_URL=https://aitraining.cloudextel.com
 CORS_ORIGIN=https://aitraining.cloudextel.com
-JWT_SECRET=[32+ character secret]
-SESSION_SECRET=[32+ character secret]
-GOOGLE_CLIENT_ID=[your-google-client-id]
-GOOGLE_CLIENT_SECRET=[your-google-client-secret]
-GOOGLE_REDIRECT_URI=https://aitraining.cloudextel.com/auth/google/callback
-GEMINI_API_KEY=[your-gemini-api-key]
-GEMINI_MODEL=gemini-2.0-flash
-DATABASE_PATH=/var/www/CE_AI_Training/backend/database.sqlite
-UPLOAD_PATH=/var/www/CE_AI_Training/backend/uploads
-```
 
-**Frontend `frontend/.env`:**
-```bash
-cd frontend
-cp env.example .env
-nano .env
-```
-
-```env
+# Frontend Build Variables (VITE_ prefix)
 VITE_API_URL=https://aitraining.cloudextel.com/api
 VITE_BACKEND_URL=https://aitraining.cloudextel.com
 VITE_SOCKET_URL=https://aitraining.cloudextel.com
+
+# Security
+JWT_SECRET=[32+ character secret]
+SESSION_SECRET=[32+ character secret]
+
+# Google OAuth
+GOOGLE_CLIENT_ID=[your-google-client-id]
+GOOGLE_CLIENT_SECRET=[your-google-client-secret]
+GOOGLE_REDIRECT_URI=https://aitraining.cloudextel.com/auth/google/callback
+
+# Gemini AI
+GEMINI_API_KEY=[your-gemini-api-key]
+GEMINI_MODEL=gemini-2.0-flash
+
+# Database & Paths
+DATABASE_PATH=/var/www/AI_Training/backend/database.sqlite
+UPLOAD_PATH=/var/www/AI_Training/backend/uploads
+
+# Email Configuration (for sending reports)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=[your-email@gmail.com]
+SMTP_PASS=[your-app-password]
+EMAIL_FROM=[your-email@gmail.com]
+EMAIL_FROM_NAME=AI Training Team
 ```
 
-```bash
-cd ..
-```
+**Note:** 
+- All variables are in ONE `.env` file at the project root
+- Frontend VITE_ variables are included in the same file
+- PM2 automatically loads `.env` from the project root (cwd)
+- No need for separate frontend/.env file anymore
+- Deployment script automatically switches to PROD mode
+- For local development, use: `./switch-env.sh dev`
 
 ### 2.4 Deploy Application
 
@@ -108,7 +136,8 @@ sudo nginx -t && sudo systemctl reload nginx
 
 # Start application
 mkdir -p logs
-pm2 start ecosystem.config.js --env production
+# PM2 automatically loads .env from the project root (cwd)
+pm2 start ecosystem.config.js
 pm2 save
 pm2 startup  # Follow the command it outputs
 ```
@@ -159,14 +188,14 @@ The version will be displayed on the login page (top-right corner) and helps tra
 
 ```bash
 # On server
-cd /var/www/CE_AI_Training
+cd /var/www/AI_Training
 git pull origin main
 
 # Rebuild if needed
 cd frontend && npm run build && cd ..
 
 # Restart
-pm2 restart ecosystem.config.js --env production
+pm2 restart ecosystem.config.js
 
 # Update nginx if PORT changed
 ./update-nginx.sh

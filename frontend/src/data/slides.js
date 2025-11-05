@@ -6,7 +6,7 @@ export const slides = [
     items: [
       { id: 'slide-1', label: 'Revolutions ➜ AI' },
       { id: 'slide-2', label: 'Queues from Online', subitem: false },
-      { id: 'slide-1ce', label: 'Solutions built at CE', subitem: true },
+      { id: 'slide-1ce', label: 'Solutions I Have Built', subitem: true },
       { id: 'slide-2a', label: 'Assignment • Spot Your Time Sink', subitem: true, isAssignment: true }
     ]
   },
@@ -47,12 +47,9 @@ export const slides = [
     id: 'chapter-5',
     title: 'Teri Baaton Mein Aisa Uljha Jiya',
     items: [
-      { id: 'slide-7a', label: 'Risks of Using AI', subitem: true },
-      { id: 'slide-7b', label: 'Security & Data Protection', subitem: true },
-      { id: 'slide-7c', label: 'Misuse & Wrong Use', subitem: true },
-      { id: 'slide-7d', label: 'Ethics & Responsibility', subitem: true },
-      { id: 'slide-7e', label: 'Guardrails & Policies', subitem: true },
-      { id: 'slide-7f', label: 'Basic Don\'ts', subitem: true }
+      { id: 'slide-7a', label: 'What Can Go Wrong?', subitem: true },
+      { id: 'slide-7b', label: 'How to Protect Yourself', subitem: true },
+      { id: 'slide-7c', label: 'Ethics & Best Practices', subitem: true }
     ]
   },
   {

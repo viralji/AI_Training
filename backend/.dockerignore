@@ -1,0 +1,17 @@
+node_modules
+npm-debug.log
+.env
+.env.local
+.env.*.local
+*.log
+*.sqlite
+*.sqlite-journal
+*.db
+uploads/*
+!uploads/.gitkeep
+.git
+.gitignore
+README.md
+.vscode
+.idea
+

@@ -300,7 +300,16 @@ const SlideRenderer = ({ slideId, isAssignment, userRole, isActive, onStartAssig
                       submissions.map((sub, idx) => (
                         <div key={idx} style={{padding: '8px', borderBottom: '1px dashed var(--border)'}}>
                           <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '4px'}}>
-                            <strong style={{color: 'var(--accent)'}}>{sub.traineeName || 'Trainee'}</strong>
+                            <div>
+                              <strong style={{color: 'var(--accent)'}}>{sub.traineeName || 'Trainee'}</strong>
+                              <div style={{color: 'var(--muted)', fontSize: '11px', marginTop: '2px'}}>
+                                {sub.approvedAt ? (
+                                  <>✓ Approved: {new Date(sub.approvedAt).toLocaleDateString()}</>
+                                ) : (
+                                  <span style={{opacity: 0.6}}>Approval date not available</span>
+                                )}
+                              </div>
+                            </div>
                             <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
                               {/* AI Score Badge */}
                               {sub.score && (

@@ -58,14 +58,25 @@ export const config = {
   cors: {
     origin: process.env.CORS_ORIGIN || process.env.FRONTEND_URL || 'http://localhost:5173',
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     optionsSuccessStatus: 200
   },
 
   // Rate limiting configuration
   rateLimit: {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW) || 15 * 60 * 1000, // 15 minutes
-    max: parseInt(process.env.RATE_LIMIT_MAX) || (process.env.NODE_ENV === 'development' ? 1000 : 100), // Higher limit for development
-    message: 'Too many requests from this IP, please try again later.'
+    // Increased limits for production: 1000 requests per 15 minutes per IP
+    // This allows 100 users to submit assignments simultaneously (each user might make 5-10 requests)
+    max: parseInt(process.env.RATE_LIMIT_MAX) || (process.env.NODE_ENV === 'development' ? 1000 : 1000),
+    message: 'Too many requests from this IP, please try again later.',
+    // Skip rate limiting for health checks
+    skip: (req) => {
+      if (req.path === '/health' || req.path === '/api/health') {
+        return true;
+      }
+      return false;
+    }
   },
 
   // Logging configuration
@@ -93,6 +104,21 @@ export const config = {
       xssFilter: true
     },
     bcryptRounds: parseInt(process.env.BCRYPT_ROUNDS) || 12
+  },
+
+  // Email configuration
+  email: {
+    smtp: {
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.SMTP_PORT) || 587,
+      secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
+      }
+    },
+    from: process.env.EMAIL_FROM || process.env.SMTP_USER || 'noreply@aitraining.com',
+    fromName: process.env.EMAIL_FROM_NAME || 'AI Training Team'
   }
 }
 
@@ -144,5 +170,6 @@ export const {
   rateLimit,
   logging,
   health,
-  security
+  security,
+  email
 } = config

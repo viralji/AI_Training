@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS users (
     name TEXT NOT NULL,
     role TEXT NOT NULL CHECK(role IN ('trainer', 'trainee')),
     avatar_url TEXT,
+    approved BOOLEAN DEFAULT 0, -- Trainer approval required for trainees
+    enabled BOOLEAN DEFAULT 1, -- User can be disabled after training
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
