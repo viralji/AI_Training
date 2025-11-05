@@ -13,36 +13,40 @@ Production-ready AI training platform with real-time assignments, AI-powered sco
 - 📱 **Responsive Design** - Mobile-friendly interface
 - 🎨 **Modern UI** - Professional dark theme
 
-## 🚀 Production Deployment
+## 🚀 Quick Start (Docker)
 
-See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for complete production deployment guide (Local → Git → Digital Ocean).
+### **Option 1: Use Pre-built Images** (Recommended)
+```bash
+# 1. Clone repository
+git clone https://github.com/viralji/AI_Training.git
+cd AI_Training
 
-### Key Steps:
+# 2. Setup environment
+cp docker/.env.local.example docker/.env.local
+# Edit docker/.env.local with your values
 
-1. **Clone repository**
-   ```bash
-   git clone https://github.com/viralji/AI_Training.git
-   cd AI_Training
-   ```
+# 3. Start services
+cd docker && ./start.sh local
 
-2. **Set environment variables**
-   ```bash
-   cp env.example .env
-   # Edit .env with your values (PORT, FRONTEND_URL, VITE_API_URL, API keys, etc.)
-   # All variables (backend + frontend) are in ONE .env file at the root
-   ```
+# 4. Access application
+open http://localhost:8080
+```
 
-3. **Build frontend**
-   ```bash
-   cd frontend
-   npm install && npm run build
-   # Vite automatically reads VITE_* variables from root .env file
-   ```
+### **Option 2: Build From Source**
+```bash
+# 1. Build images
+./build.sh local
 
-4. **Deploy**
-   ```bash
-   # See DEPLOY.md for complete instructions
-   ```
+# 2. Start services
+cd docker && ./start.sh local
+```
+
+## 📖 Complete Documentation
+
+- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Complete deployment guide (Local + Production)
+- **[PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md)** - File organization & usage
+- **[DOCKER_CHEAT_SHEET.md](./DOCKER_CHEAT_SHEET.md)** - Quick reference commands
+- **[IDEAL_DOCKER_SETUP.md](./IDEAL_DOCKER_SETUP.md)** - Best practices & lessons learned
 
 ## 🛠️ Local Development
 
