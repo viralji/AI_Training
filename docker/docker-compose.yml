@@ -1,0 +1,61 @@
+# AI Training Platform - Docker Compose
+# 
+# Usage:
+#   Local:      docker-compose --env-file .env.local up -d
+#   Production: docker-compose --env-file .env.prod up -d
+#
+# Or use the start script:
+#   ./start.sh local   # for local development
+#   ./start.sh prod    # for production
+
+services:
+  backend:
+    image: ${DOCKER_USERNAME:-viraljidocker}/ai-training-backend:latest
+    container_name: ai_training_backend
+    restart: unless-stopped
+    environment:
+      # Pass critical variables explicitly to ensure they're set
+      - NODE_ENV=${NODE_ENV:-development}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - CORS_ORIGIN=${CORS_ORIGIN}
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI}
+      - PORT=${BACKEND_PORT:-3002}
+    env_file:
+      # All other variables from .env file
+      - ${ENV_FILE:-.env.local}
+    ports:
+      - "${BACKEND_PORT:-3002}:3002"
+    volumes:
+      # Only for local development - comment out for production
+      - ${DATABASE_VOLUME:-../backend/database.sqlite}:/app/database.sqlite
+      - ${UPLOADS_VOLUME:-../backend/uploads}:/app/uploads
+    networks:
+      - ai_net
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    image: ${DOCKER_USERNAME:-viraljidocker}/ai-training-frontend:latest
+    container_name: ai_training_frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - ai_net
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  ai_net:
+    driver: bridge
+
